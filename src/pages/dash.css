@@ -1,0 +1,98 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body,
+html {
+  height: 100%;
+  background-color: #f8f9fa;
+}
+
+.full-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  /* justify-content: center; */
+}
+
+.logoImg {
+  padding-left: 1rem;
+  width: 180px;
+  height: 30px;
+}
+
+.navHeading {
+  font-size: xx-large;
+  font-weight: bolder;
+}
+select.form-select.mb-3 {
+  color: black;
+}
+.navText {
+  color: white;
+  padding-right: 4rem;
+}
+
+.header {
+  margin-top: auto;
+  margin: 50px;
+  display: grid;
+  flex-wrap: wrap;
+  padding: 0 10px;
+  justify-content: center;
+  border: none;
+  background: none;
+}
+
+.nav1 {
+  margin-bottom: 40px;
+}
+.header-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  width: 30%;
+  border: none;
+  box-sizing: border-box; /* Ensure border and padding are included in width */
+}
+
+.header-item label {
+  display: block;
+  margin: 0; /* Remove default margin */
+  padding: 5px;
+  margin-bottom: 5px;
+  font-size: 14px;
+  background-color: #1a3654;
+  color: white;
+  width: 100%; /* Make label cover the entire width of its container */
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.header-item select {
+  padding: 6px;
+  margin: 0; /* Remove default margin */
+  margin-top: 10px;
+  border: 1px solid #ccc;
+  border-radius: 0;
+  color: black;
+  width: 100%; /* Make select cover the entire width of its container */
+  box-sizing: border-box; /* Include padding in width */
+}
+
+.btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100px;
+}
+
+.btn {
+  width: 100px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

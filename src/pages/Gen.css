@@ -1,0 +1,109 @@
+body {
+  overflow-x: hidden;
+  
+}
+
+.header-container {
+  margin: 20px;
+  position: sticky !important;
+  top: 0;
+  z-index: 3;
+  background-color: rgb(255, 255, 255);
+}
+
+.g-table-container {
+  margin: 20px;
+  position: relative;
+}
+
+.g-card-header {
+  background-color: #cfd1d3;
+  color: rgb(6, 6, 6);
+  font-weight: bold;
+  text-align: left;
+  width:100vw;
+  padding:5px;
+}
+
+.g-label {
+  display: inline-block;
+  width: 100%;
+  margin-top: 20px;
+  margin-bottom: 5px;
+  font-weight: bold;
+  background-color: #0d3968;
+  color: white;
+  text-align: left;
+  padding: 5px;
+  border-radius: 4px;
+}
+
+.g-input-box {
+  display: block;
+  width: 100%;
+  padding: 5px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.g-th th {
+  background-color: #0d3869 !important;
+  border: 1px solid #fffbfb !important;
+  color: white !important;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.g-table-wrapper {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.g-table-wrapper table {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: collapse;
+}
+
+.g-button-container {
+  display: flex;
+  justify-content: center;
+  border-radius: 4px;
+  gap: 10px;
+}
+
+.g-button-container .btn {
+  width: 150px;
+  height: 55px;
+  justify-content: space-evenly;
+  background-color: #0d3869;
+  color: white;
+}
+
+.g-table-data td {
+  border: 1px solid #eae9e9;
+  color:#000;
+}
+
+.full-page{
+  width: 100%;
+}
+
+.container{
+  width:100%
+}
+
+.g-toggle-input-container {
+  display: flex;
+  align-items: center; 
+}
+
+.g-toggle-checkbox {
+  margin-right: 0.5rem; 
+}
+
+.g-input-box {
+  width: 100%; 
+}

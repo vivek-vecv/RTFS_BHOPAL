@@ -1,0 +1,128 @@
+/* General font styling */
+.App {
+  font-family: Arial, sans-serif;
+  background-color: whitesmoke;
+}
+
+/* CoreUI Container styling */
+.c-container {
+  width: 100%;
+  padding: 20px;
+  background-color: aqua;
+}
+
+/* CoreUI Row and Col styling */
+.c-row {
+  margin-top: 20px;
+}
+
+.c-col {
+  padding: 0 15px;
+}
+
+/* Form and Input styling */
+.c-form-label {
+  background-color: #0d3968;
+  color: white;
+  padding: 5px;
+  border-radius: 4px;
+  text-align: center;
+  width: 100%; /* Full width within container */
+}
+
+.c-form-input {
+  border: 2px solid #ccc;
+  padding: 8px;
+  background-color: white;
+  color: black;
+  width: 100%; /* Full width within container */
+  box-sizing: border-box;
+}
+
+/* Button styling */
+.c-button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+.c-button.primary {
+  background-color: #0d3968; /* CoreUI primary button color */
+}
+
+.c-button.primary:hover {
+  background-color: #139ed0; /* Primary button hover color */
+}
+
+/* Layout for button row */
+.buttons {
+  margin-top: 20px;
+}
+
+.buttons .c-button {
+  margin-right: 10px;
+ 
+}
+
+/* Search input and button styling */
+.search-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.search-container .c-form-input {
+  width: 200px; /* Set a specific width for the search input */
+  padding: 5px;
+  flex: 1;
+}
+
+/* Style for table headers */
+.table-head td {
+  background-color: #0d3968 !important;
+  border: 1px solid #ccc !important;
+  color: white !important;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Style for search input */
+.search-input {
+  max-width: 300px; /* Set a maximum width for the search input */
+}
+
+/* Style for highlighted text */
+.highlight {
+  background-color: #ffc107; /* Bootstrap warning color */
+  color: black; /* Ensure text is readable */
+  padding: 0.2em; /* Add padding for better visibility */
+  border-radius: 3px; /* Slightly rounded corners */
+}
+
+/* Styling for buttons with margin classes */
+.me-2 {
+  background-color: #0d3968;
+  color: aliceblue;
+}
+
+.me-2:hover {
+  background-color: #139ed0; /* Primary button hover color */
+}
+
+.ms-2 {
+  background-color: #0d3968;
+  color: aliceblue;
+}
+
+.ms-2:hover {
+  background-color: #139ed0; /* Primary button hover color */
+}
+.btn-primary {
+  background-color:#0d3968;
+}
