@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./AuthContext.jsx";
+import { credentials } from "./credentials.jsx";
 import {
   CContainer,
   CRow,
@@ -8,14 +9,12 @@ import {
   CForm,
   CFormLabel,
   CFormInput,
+  CImage,
   CButton,
   CAlert,
-  CNavbar,
-  CNavbarBrand,
-  CNavbarText,
 } from "@coreui/react";
-import logo from "../images/Customer_Logo.png";
 import "./login.css";
+import Navbar from "./navbar.jsx";
 import {
   login_api,
   headers,
@@ -26,8 +25,8 @@ import {
 import axios from "axios";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("sayali");
-  const [password, setPassword] = useState("done");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [res, setRes] = useState("");
   const navigate = useNavigate();
@@ -35,23 +34,23 @@ const LoginPage = () => {
   const [shift, setShift] = useState("");
   const { login, heading } = useAuth();
   useEffect(() => {
-    axios({
-      method: "get",
-      url: `http://10.119.1.101:9898/rest/api/login?username=${encodeURIComponent(
-        username
-      )}&password=${encodeURIComponent(password)}`,
-      auth: {
-        username: "Arun",
-        password: "123456",
-      },
-    })
-      .then((response) => {
-        console.log(response.data);
-        setRes(response.data);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    // axios({
+    //   method: "get",
+    //   url: `http://10.119.1.101:9898/rest/api/login?username=${encodeURIComponent(
+    //     username
+    //   )}&password=${encodeURIComponent(password)}`,
+    //   auth: {
+    //     username: "Arun",
+    //     password: "123456",
+    //   },
+    // })
+    //   .then((response) => {
+    //     console.log(response.data);
+    //     setRes(response.data);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error:", error);
+    //   });
 
     const interval = setInterval(() => {
       // console.log("password", headers);
@@ -72,98 +71,134 @@ const LoginPage = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = () => {
+    const user = credentials.find(
+      (cred) => cred.username === username && cred.password === password
+    );
 
-    try {
-      axios({
-        method: "get",
-        url: `http://10.119.1.101:9898/rest/api/login?username=${encodeURIComponent(
-          username
-        )}&password=${encodeURIComponent(password)}`,
-        auth: {
-          username: "Arun",
-          password: "123456",
-        },
-      })
-        .then((response) => {
-          console.log(response.data);
-          setRes(response.data);
-        })
-        .catch((error) => {
-          console.error("Error:", error);
-        });
+    console.log(username, password);
 
-      // Check if the login is successful by looking for the specific key in the response
-      if (res.Info === "Login successful") {
-        login(); // Perform the login action
-        const redirectTo = localStorage.getItem("redirectPath");
-        localStorage.removeItem("redirectPath");
-        localStorage.removeItem("redirectHeading");
-
-        // Redirect to the specified path or default to Dashboard
-        navigate(redirectTo || "/dashboard");
-      } else {
-        setError("Invalid username or password");
-      }
-    } catch (err) {
-      setError("Error in logging, please try again");
-      console.log(err);
+    if (user) {
+      console.log(user);
+      login(user);
+      // Optionally, redirect to a default route or the user's component
+      window.location.hash = `/${username.toLowerCase()}`; // Redirect based on username
+    } else {
+      setError("Username and password are incorrect");
     }
   };
 
-  return (
-    <div className="full-screen">
-      <CNavbar color="primary" dark>
-        <CNavbarBrand onClick={() => navigate("/")}>
-          <img src={logo} alt="Logo" className="logoImg" />
-        </CNavbarBrand>
-        <div className="navHeading">
-          <CNavbarText className="navText">{heading}</CNavbarText>
-        </div>
-        <div className="nav2">
-          <CNavbarText className="navText">{currentTime}</CNavbarText>
-          <br />
-          <CNavbarText className="navText">Shift: {shift}</CNavbarText>
-        </div>
-      </CNavbar>
+  // const handleLogin = async (e) => {
+  //   e.preventDefault();
 
-      <CContainer fluid className="login-container">
-        <CRow>
-          <CCol md="4" className="login-box">
-            <h2>Login</h2>
+  //   try {
+  //     axios({
+  //       method: "get",
+  //       url: `http://10.119.1.101:9898/rest/api/login?username=${encodeURIComponent(
+  //         username
+  //       )}&password=${encodeURIComponent(password)}`,
+  //       auth: {
+  //         username: "Arun",
+  //         password: "123456",
+  //       },
+  //     })
+  //       .then((response) => {
+  //         console.log(response.data);
+  //         setRes(response.data);
+  //       })
+  //       .catch((error) => {
+  //         console.error("Error:", error);
+  //       });
+
+  //     // Check if the login is successful by looking for the specific key in the response
+  //     if (res.Info === "Login successful") {
+  //       login(); // Perform the login action
+  //       const redirectTo = localStorage.getItem("redirectPath");
+  //       localStorage.removeItem("redirectPath");
+  //       localStorage.removeItem("redirectHeading");
+
+  //       // Redirect to the specified path or default to Dashboard
+  //       navigate(redirectTo || "/dashboard");
+  //     } else {
+  //       setError("Invalid username or password");
+  //     }
+  //   } catch (err) {
+  //     setError("Error in logging, please try again");
+  //     console.log(err);
+  //   }
+  // };
+
+  return (
+    <>
+      <Navbar shift={shift} currentTime={currentTime} heading={heading} />
+      <CContainer
+        fluid
+        className="d-flex justify-content-center align-items-center min-vh-100"
+      >
+        <CRow className="w-75 d-flex justify-content-center align-items-center bg-light bg-gradient rounded-2">
+          <CCol xs={12} md={6} className="d-flex justify-content-center">
+            <CImage
+              fluid
+              src="/src/images/transparent.png"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+              }}
+            />
+          </CCol>
+
+          <CCol
+            xs={12}
+            md={6}
+            className="border border-2 shadow bg-light rounded p-4 w-auto"
+          >
+            <h2 style={{ textAlign: "center" }}>Login</h2>
+
             {error && <CAlert color="danger">{error}</CAlert>}
-            <CForm onSubmit={handleLogin}>
+
+            <CForm
+              onSubmit={handleLogin}
+              className="p-4 gap-4 d-flex flex-column"
+            >
               <div className="form-group">
-                <CFormLabel htmlFor="username">User Name </CFormLabel>
+                <CFormLabel htmlFor="username">Username</CFormLabel>
                 <CFormInput
                   type="text"
                   id="username"
-                  placeholder="Enter your username"
+                  placeholder="Enter username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="input-field"
                 />
               </div>
+
               <div className="form-group">
-                <CFormLabel htmlFor="password">Password </CFormLabel>
+                <CFormLabel htmlFor="password">Password</CFormLabel>
                 <CFormInput
                   type="password"
                   id="password"
-                  placeholder="Enter your password"
+                  placeholder="Enter password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  className="input-field"
                 />
               </div>
-              <CButton type="submit" className="login-button">
+
+              <CButton type="submit" className="btn btn-primary w-100">
                 Login
               </CButton>
+
+              {error && (
+                <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+              )}
             </CForm>
           </CCol>
         </CRow>
       </CContainer>
-    </div>
+    </>
   );
 };
 

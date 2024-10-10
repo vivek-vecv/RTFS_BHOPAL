@@ -1,0 +1,12 @@
+// @import "./../../node_modules/@coreui/coreui/scss/";
+
+// Override CoreUI variables
+$primary: #091057; // Change primary color
+// $secondary: #6c757d; // Change secondary color
+// $success: #28a745; // Change success color
+// $info: #17a2b8; // Change info color
+// $warning: #ffc107; // Change warning color
+// $danger: #dc3545; // Change danger color
+
+// Import the CoreUI styles again to apply your customizations
+@import "./../node_modules/@coreui/coreui/scss/coreui";

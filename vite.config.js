@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     server: {
+      port: 3000,
       proxy: {
         "/rest/api": {
           target: env.VITE_API_URL || "http://10.119.1.101:9898", // Backend API URL
