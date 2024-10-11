@@ -1,15 +1,5 @@
 /* Basic styling for navbar and dropdown sections */
-body {
-  transform: scale(0.8);
-  /* Zoom out to 80% */
-  transform-origin: top left;
-  /* Start zooming out from the top-left corner */
-  width: 125%;
-  /* Compensate for the scaling */
-  height: 125%;
-  overflow: hidden;
-  /* Hide any horizontal overflow */
-}
+
 
 nav.navbar {
   padding: 0;

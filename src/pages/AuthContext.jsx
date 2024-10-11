@@ -28,6 +28,11 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    console.log(
+      '--------------------localStorage.getItem("username");-----------------\n',
+      localStorage.getItem("username")
+    );
+
     const checkUserAuthentication = () => {
       const storedUser = localStorage.getItem("username"); // or however you're storing it
       if (storedUser) {

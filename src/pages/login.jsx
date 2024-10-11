@@ -133,9 +133,9 @@ const LoginPage = () => {
       <Navbar shift={shift} currentTime={currentTime} heading={heading} />
       <CContainer
         fluid
-        className="d-flex justify-content-center align-items-center min-vh-100"
+        className="d-flex justify-content-center align-items-center"
       >
-        <CRow className="w-75 d-flex justify-content-center align-items-center bg-light bg-gradient rounded-2">
+        <CRow className=" d-flex justify-content-center align-items-center bg-gradient rounded-2">
           <CCol xs={12} md={6} className="d-flex justify-content-center">
             <CImage
               fluid

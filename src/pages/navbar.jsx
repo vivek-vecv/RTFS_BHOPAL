@@ -7,7 +7,7 @@ import "./navbar.css";
 
 const Navbar = ({ heading, currentTime, shift }) => {
   return (
-    <CNavbar color="primary">
+    <CNavbar color="primary" className="position-sticky top-0">
       <CNavbarBrand>
         <img
           src={logo}
