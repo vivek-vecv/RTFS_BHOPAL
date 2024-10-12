@@ -1,657 +1,636 @@
-import React, { useState, useEffect, useRef } from "react";
-import {
-  CFormInput,
-  CNavbar,
-  CNavbarNav,
-  CNavItem,
-  CNavLink,
-  CTableDataCell,
-  CTableBody,
-  CTableRow,
-  CTableHeaderCell,
-  CTable,
-  CFormCheck,
-  CTableHead,
-  CContainer,
-  CFormSelect,
-  CNavbarBrand,
-  CRow,
-  CCol,
-  CCollapse,
-  CCard,
-  CButton,
-  CFormLabel,
-  CCardBody,
-} from "@coreui/react";
-import logo from "../images/eicher_logo.png";
-import Navbar from "./navbar.jsx";
-import "./Checkmansheet.css"; // Custom CSS for styling
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import ShiftAndTime from "./ShiftAndTime.jsx";
-import { FaCalendarAlt } from "react-icons/fa";
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import Select from 'react-select';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { CButton, CSpinner, CModal, CModalHeader, CModalBody } from '@coreui/react';
+import { FaTrash } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import { BsQrCode } from 'react-icons/bs';
+import BarcodeScanner from './BarcodeScanner.jsx';
 const Checkmansheet = () => {
-  const [serialNumber, setSerialNumber] = useState("");
-  const [fullChassisNumber, setFullChassisNumber] = useState("");
-  const [headerDetails, setHeaderDetails] = useState({});
-  const [tableDetails, setTableDetails] = useState([]);
-  const [defectList, setDefectList] = useState([]);
-  const [rows, setRows] = useState([]);
-  const [date, setDate] = useState(null);
-  const [selectedCheckman, setSelectedCheckman] = useState("");
-  const [isDatePickerOpen, setDatePickerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dataFetched, setDataFetched] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(null); // To manage which dropdown is open
-  const [selectedDefects, setSelectedDefects] = useState({});
-  const { currentTime, shift } = ShiftAndTime();
-  const dropdownRefs = useRef([]);
-  const fetchData = (inputSerialNumber) => {
-    const jsonData = {
-      // Include the JSON data here
-      six_digit_sfc_input: {
-        SFC: "103744",
-      },
-      six_digit_sfc_output: {
-        VIN_NUMBER: ["MC2BAGRC0RA106883", "MC2CBMRC0RC106883"],
-      },
-      header_details_input: {
-        SFC: "MC2CAMRC0RB103744",
-        Line: "LMD",
-        Zone: "Zone-2",
-        LOGGED_STATION: "LMD_QG",
-        STATION: "LH",
-      },
-      header_details_output: {
-        CHASSIS_QG_CHECKPOINT: {
-          HEADER_DETAILS: {
-            SFC: "MC2CAMRC0RB103744",
-            LINE: "LMD",
-            SHIFT: "A",
-            FUELTYPE: "DSL",
-            REVISION_NUMBER: 1,
-            REVISION_DATE: "30-09-2021",
-            FORMAT_NUMBER: "F-QUA-448",
-            DATE: "19-09-2024",
-            MODEL: "Pro3019",
-            MODEL_DESC: "Pro3019/M/SLP/CBC/22FT/BS6 BASE 7S/OBD2",
-            FERT_CODE: 99206152,
-            HALB_CODE: "CL3986CW",
-            CHECKMAN_NAME_LIST: {
-              CHECKMAN_NAME: [
-                {
-                  CHECKMAN_NAME: "Bharat Singh",
-                  SEL_NAME: "Rajkumar Ahirwal",
-                },
-                {
-                  CHECKMAN_NAME: "Sur Singh",
-                  SEL_NAME: "Rajkumar Ahirwal",
-                },
-              ],
-            },
-            REWORKMAN_NAME_LIST: "",
-            SEL_CHKMAN: "Rajkumar Ahirwal",
-            STATION: "LH",
-            SEL_RWKMAN: "Deepak",
-          },
-          CHECKPOINT_TABLE_DETAILS: {
-            CHECKPOINT_TABLE: [
-              {
-                CHECKPOINT: "No. Punching and Front harness.",
-                CHECKPOINT_ID: 25,
-                IMAGE_ICON: "",
-                INSPECTION_METHOD: "Hand / Visual",
-                SEL_ADD: "",
-                SEL_STATUS: "",
-                REMARKS: "",
-                ADDITIONAL_DEFECT_LIST: {
-                  DEFECT_DESC: "",
-                  DEFECT_CODE: "",
-                  ADDITIONAL_DEFECT_DETAILS: [
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.- Grinding Mark",
-                      DEFECT_CODE: 303102,
-                    },
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.-Chassis no. wrong",
-                      DEFECT_CODE: 303098,
-                    },
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.-Inclined punching",
-                      DEFECT_CODE: 303103,
-                    },
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.-Letter distance unequal",
-                      DEFECT_CODE: 303101,
-                    },
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.-RPO oil not applied",
-                      DEFECT_CODE: 303100,
-                    },
-                    {
-                      DEFECT_DESC:
-                        "No. Punching and Front harness.-tracing not ok",
-                      DEFECT_CODE: 303099,
-                    },
-                  ],
-                },
-              },
-              {
-                CHECKPOINT: "Rear Suspension Check.",
-                CHECKPOINT_ID: 26,
-                INSPECTION_METHOD: "Visual Inspection",
-                REMARKS: "",
-                ADDITIONAL_DEFECT_LIST: {
-                  ADDITIONAL_DEFECT_DETAILS: [
-                    {
-                      DEFECT_DESC: "Loose bolts on suspension.",
-                      DEFECT_CODE: 303201,
-                    },
-                    {
-                      DEFECT_DESC: "Deteriorated bushings.",
-                      DEFECT_CODE: 303202,
-                    },
-                  ],
-                },
-              },
-              {
-                CHECKPOINT: "Brake System Inspection.",
-                CHECKPOINT_ID: 27,
-                INSPECTION_METHOD: "Hand / Visual",
-                REMARKS: "",
-                ADDITIONAL_DEFECT_LIST: {
-                  ADDITIONAL_DEFECT_DETAILS: [
-                    {
-                      DEFECT_DESC: "Brake pads worn out.",
-                      DEFECT_CODE: 303301,
-                    },
-                    {
-                      DEFECT_DESC: "Brake fluid leak.",
-                      DEFECT_CODE: 303302,
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-        post_payload_input: {
-          DefectInputString: "303103,NOK;338848,NOK",
-          SFC: "MC2CAMRC0RB103744",
-          CHECKMAN: "Rajkumar Ahirwal",
-          REWORKMAN: "Deepak",
-          LOGGED_STATION: "LMD_QG",
-          Line: "LMD",
-          Zone: "Zone-2",
-          Model: "Pro3019",
-          STATION: "LH",
-        },
-        post_payload_output: {
-          Status: "Success",
-          Message: "Defects saved successfully.",
-        },
-      },
-    };
-    // Set the full chassis number here
-    const vinNumbers = jsonData.six_digit_sfc_output.VIN_NUMBER || [];
-    const fullChassis = vinNumbers.find((vin) =>
-      vin.includes(inputSerialNumber)
-    );
-    setFullChassisNumber(fullChassis || ""); // Set the full chassis number if found
-    // Check if serial number matches and set data
-    setHeaderDetails(
-      jsonData.header_details_output.CHASSIS_QG_CHECKPOINT.HEADER_DETAILS
-    );
-    setTableDetails(
-      jsonData.header_details_output.CHASSIS_QG_CHECKPOINT
-        .CHECKPOINT_TABLE_DETAILS.CHECKPOINT_TABLE
-    );
-    setDefectList(
-      jsonData.header_details_output.CHASSIS_QG_CHECKPOINT
-        .CHECKPOINT_TABLE_DETAILS.CHECKPOINT_TABLE[0].ADDITIONAL_DEFECT_LIST
-        .ADDITIONAL_DEFECT_DETAILS
-    );
-    setRows(
-      jsonData.header_details_output.CHASSIS_QG_CHECKPOINT.CHECKPOINT_TABLE_DETAILS.CHECKPOINT_TABLE.map(
-        () => ({ status: "OK", defect: "", remarks: "" })
-      )
-    );
-    setFullChassisNumber(fullChassis || "");
-    if (fullChassis) {
-      setSerialNumber(fullChassis); // Replace the 6-digit number with the full chassis number
-    }
-    setDataFetched(true);
-  };
-  const checkmanNames = headerDetails.CHECKMAN_NAME_LIST?.CHECKMAN_NAME || [];
-  const handleSerialChange = (e) => {
-    const value = e.target.value;
-    setSerialNumber(value);
-  };
-  const handleDefectSelect = (index, defectDesc) => {
-    // Add the selected defect if it's not already included
-    setRows((prevRows) => {
-      const updatedDefects = [...prevRows[index].defect];
-      if (!updatedDefects.includes(defectDesc)) {
-        updatedDefects.push(defectDesc);
-      } else {
-        const idx = updatedDefects.indexOf(defectDesc);
-        updatedDefects.splice(idx, 1); // Remove defect if already selected
-      }
-      return prevRows.map((row, i) =>
-        i === index ? { ...row, defect: updatedDefects } : row
-      );
+  const [process, setProcess] = useState('static');
+  const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [chassisNumber, setChassisNumber] = useState('');
+  const [auditorOptions, setAuditorOptions] = useState([]);
+  const [partOptions, setPartOptions] = useState([]);
+  const [defectOptions, setDefectOptions] = useState([]);
+  const [error, setError] = useState('');
+  const [tableEntries, setTableEntries] = useState([]);
+  const [serialInfo, setSerialInfo] = useState({
+    Series: '',
+    Engine_Number: '',
+    Model: '',
+    Rollout_Date: '',
+    Serial_Number: '',
+  });
+  const [selectedDefects, setSelectedDefects] = useState([]);
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [selectedAuditor, setSelectedAuditor] = useState(null);
+  const [totalDefects, setTotalDefects] = useState(0);
+  const [totalDemerits, setTotalDemerits] = useState(0);
+  const [auditDate, setAuditDate] = useState('');
+
+  const emptyModel = () => {
+    setTotalDefects(0);
+    setTotalDemerits(0);
+    setChassisNumber('');
+    setAuditorOptions([]);
+    setPartOptions([]);
+    setDefectOptions([]);
+    setSelectedPart(null);
+    setSelectedAuditor(null);
+    setSelectedDefects([]);
+    setTableEntries([]);
+    setSerialInfo({
+      Series: '',
+      Engine_Number: '',
+      Model: '',
+      Rollout_Date: '',
+      Serial_Number: '',
+      Part_Description: '',
+      Order_Number: '',
+      Shift_Name: '',
     });
+    setSelectedPart(null);
+    setAuditDate('');
   };
-  const toggleDropdown = (index) => {
-    if (dropdownOpen === index) {
-      setDropdownOpen(null); // Close if the same dropdown is clicked
-    } else {
-      setDropdownOpen(index); // Open the clicked dropdown
-    }
-  };
-  const handleOutsideClick = (e) => {
-    // Close the dropdown if clicked outside of any dropdown
-    if (
-      dropdownOpen !== null &&
-      dropdownRefs.current[dropdownOpen] &&
-      !dropdownRefs.current[dropdownOpen].contains(e.target)
-    ) {
-      setDropdownOpen(null);
-    }
-  };
-  useEffect(() => {
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("mousedown", handleOutsideClick); // Cleanup on unmount
-    };
-  }, [dropdownOpen]);
-  const handleSerialSubmit = () => {
-    if (serialNumber.length === 6) {
-      fetchData(serialNumber);
-    } else {
-      alert("Please enter a valid 6-digit serial number.");
-    }
-  };
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
-      handleSerialSubmit();
-    }
-  };
-  const handleCheckmanChange = (e) => {
-    setSelectedCheckman(e.target.value);
-  };
-  const handleSuggestionClick = (serial) => {
-    setSerialNumber(serial);
-    fetchData(serial);
-  };
-  const handleToggle = (index) => {
-    setRows(
-      rows.map((row, i) =>
-        i === index
-          ? { ...row, status: row.status === "OK" ? "NOK" : "OK", defect: "" }
-          : row
-      )
-    );
-  };
-  const toggleDatePicker = () => {
-    setDatePickerOpen(!isDatePickerOpen);
-  };
-  const handleDefectChange = (index, event) => {
-    setRows(
-      rows.map((row, i) =>
-        i === index ? { ...row, defect: event.target.value } : row
-      )
-    );
-  };
-  const handleRemarksChange = (index, event) => {
-    setRows(
-      rows.map((row, i) =>
-        i === index ? { ...row, remarks: event.target.value } : row
-      )
-    );
-  };
-  const [data, setData] = useState(["1", "2", "3", "4"]); // Replace with actual serial numbers or observation data
-  const handleSubmit = () => {
-    const postData = {
-      SFC: headerDetails.SFC,
-      Line: headerDetails.LINE,
-      Defects: rows.map((row) => ({
-        defect: row.defect,
-        remarks: row.remarks,
-      })),
-    };
-    fetch("/api/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(postData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Success:", data);
+  const fetchSerialNumberDetails = async (serialNumber) => {
+    try {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForAudit/?Serial_Number=${serialNumber}`, {
+        auth: {
+          username: 'arun',
+          password: '123456',
+        },
       });
+
+      if (response.status === 200) {
+        const serialInformation = response.data.Serial_Information[0];
+        setSerialInfo({
+          Series: serialInformation.Series,
+          Engine_Number: serialInformation.Engine_Number,
+          Model: serialInformation.Model,
+          Rollout_Date: serialInformation.Rollout_Date,
+          Serial_Number: serialInformation.Serial_Number,
+          Shift_Name: serialInformation.Shift_Name,
+          Order_Number: serialInformation.Order_Number,
+          Part_Description: serialInformation.Part_Description,
+        });
+
+        await fetchPartsData(serialInformation.Series, process);
+        return serialInformation.Serial_Number;
+      }
+    } catch (error) {
+      console.error('Error fetching serial number details:', error);
+    }
   };
+
+  const fetchChassisNumber = async (value) => {
+    try {
+      if (value.length == 6 || value.length == 17) {
+        const chassis = await fetchSerialNumberDetails(value);
+        if (chassis) {
+          setChassisNumber(chassis);
+          fetchAuditors();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching serial details :', error);
+    }
+  };
+
+  const handleChassisNumberChange = async (e) => {
+    const value = e.target.value;
+    setChassisNumber(value);
+    fetchChassisNumber(value);
+  };
+
+  const fetchPartsData = async (series, processName) => {
+    try {
+      const response = await axios.get(
+        `http://10.119.1.101:9898/rest/api/getPartsForAuditAcctoProcess?Model=${series}&Process_Name=${processName}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const partsList = response.data['Parts Data_List'] || [];
+        setPartOptions(
+          partsList.map((part) => ({
+            value: part.Part_Name,
+            label: part.Part_Name,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching parts data:', error);
+    }
+  };
+
+  const handlePartChange = async (selectedOption) => {
+    if (selectedOption) {
+      const selectedPartName = selectedOption.value; // Get the selected part's name
+      await fetchDefectsForPart(serialInfo.Series, selectedPartName);
+      setSelectedPart(selectedOption);
+      // Reset the selected defects when part changes
+      setSelectedDefects([]);
+    }
+  };
+
+  const fetchDefectsForPart = async (seriesName, partName) => {
+    try {
+      const response = await axios.get(
+        `http://10.119.1.101:9898/rest/api/getAllDefectsForAuditPart?Model_Name=${seriesName}&Part_name=${partName}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        const defectsList = response.data.Defect_List || [];
+        setDefectOptions(
+          defectsList.map((defect) => ({
+            value: defect.Defect_Name, // Using Defect_Name directly
+            label: defect.Defect_Name, // Using Defect_Name for description as well
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching defects for part:', error);
+    }
+  };
+
+  const fetchAuditors = async () => {
+    try {
+      const response = await axios.get('http://10.119.1.101:9898/rest/api/getAllAuditors/', {
+        auth: {
+          username: 'arun',
+          password: '123456',
+        },
+      });
+
+      if (response.status === 200) {
+        const auditorsList = response.data.Auditors_list || [];
+        setAuditorOptions(
+          auditorsList.map((auditor) => ({
+            value: auditor.Auditor,
+            label: auditor.Auditor,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching auditors:', error);
+    }
+  };
+
+  const handleAuditorChange = async (selectedOption) => {
+    if (selectedOption) {
+      setSelectedAuditor(selectedOption);
+    }
+  };
+
+  useEffect(() => {
+    if (chassisNumber) {
+      fetchHeaderData(chassisNumber);
+    }
+  }, [chassisNumber]);
+
+  const fetchHeaderData = (chassisNumber) => {
+    console.log(`Fetching data for chassis: ${chassisNumber}`);
+    // setIsDisabled(false);
+  };
+
+  const handleDefectChange = (selectedOptions) => {
+    setSelectedDefects(selectedOptions); // Update state with selected defects
+  };
+
+  const handleAdd = async () => {
+    if (!selectedPart || selectedDefects.length === 0) {
+      toast.warn('Select part or defect(s) to add', { autoClose: 3000 });
+      return;
+    }
+
+    const model = serialInfo.Series; // Assuming you want to use this model
+    let newDemerits = 0; // Initialize a variable to calculate total demerits
+    const newEntries = []; // Store newly added entries
+
+    // Loop through each selected defect
+    setLoading(true);
+    for (const selectedDefect of selectedDefects) {
+      // Check if the entry already exists
+      const exists = tableEntries.some((entry) => entry.PART === selectedPart.value && entry.DEFECT_DESC === selectedDefect.value);
+
+      if (exists) {
+        toast.error(`Entry already exists for part: ${selectedPart.value} and defect: ${selectedDefect.value}`, { autoClose: 3000 });
+        setLoading(false);
+
+        continue; // Skip this defect if it already exists
+      }
+
+      const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForAudit?part_ID=${encodeURIComponent(
+        selectedPart.value
+      )}&Defect_Desc=${encodeURIComponent(selectedDefect.value)}&Model=${encodeURIComponent(model)}`;
+
+      try {
+        const response = await axios.get(apiUrl, {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        });
+
+        if (response.status === 200) {
+          const defectInfo = response.data.Defect_Information || [];
+
+          defectInfo.forEach((info) => {
+            const tableRow = {
+              PART: info.Part_Name,
+              DEFECT_DESC: info.Defect_Desc,
+              DEMERIT: info.Demerit,
+              TSELF: info.Tself,
+              AGGREGATE: info.Aggregate,
+              HEAD: info.Head,
+              CATEGORY: info.Category,
+              ZONE: 'N/A',
+              SFC: chassisNumber,
+              STATUS: 'NOK',
+              DEFECT_CODE: info.Defect_Code,
+              // Fallback for zone
+            };
+
+            newEntries.push(tableRow); // Store new entries
+            newDemerits += parseInt(info.Demerit) || 0; // Use parseFloat and fallback to 0 if NaN
+            setSelectedDefects([]);
+          });
+        }
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.error('Error fetching defect data:', error);
+        alert('Failed to fetch defect data for ' + selectedDefect.value);
+      }
+    }
+
+    // Update the table entries and totals after the loop
+    setTableEntries((prevEntries) => [...prevEntries, ...newEntries]);
+    setTotalDefects((prevTotal) => prevTotal + newEntries.length); // Update total defects
+    setTotalDemerits((prevTotal) => prevTotal + newDemerits); // Update total demerits
+  };
+
+  useEffect(() => {
+    fetchAuditors();
+  }, []);
+
+  const handleDelete = (index, defectValue, demeritValue) => {
+    setTableEntries((prevEntries) => {
+      const updatedEntries = prevEntries.filter((_, i) => i !== index); // Remove the entry at the specified index
+      return updatedEntries;
+    });
+
+    // Update total defects and demerits
+    setTotalDefects((prevTotal) => prevTotal - 1); // Decrease the defect count by 1
+    setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0); // Decrease total demerits
+  };
+
+  //==============================Submit function code ===================================================
+
+  const handleSubmit = async () => {
+    if (tableEntries.length === 0) {
+      toast.error('No entries in table.'); // Set error if date is blank
+      return;
+    }
+
+    if (!auditDate) {
+      toast.error('Please select an audit date and time.');
+      return; // Exit the function if auditDate is empty
+    }
+
+    try {
+      let status;
+      for (const entry of tableEntries) {
+        const dataList = {
+          Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
+          Model: serialInfo.Model, // Adjust as necessary
+          Category: entry.CATEGORY,
+          Part_Name: entry.PART,
+          Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
+          Defect_Desc: entry.DEFECT_DESC,
+          Station: 'PAG', // Adjust as necessary
+          Demerit: entry.DEMERIT,
+          Tself: entry.TSELF,
+          Head: entry.HEAD,
+          Aggregate: entry.AGGREGATE,
+          Status: 'NOK', // Adjust as necessary
+          Audit_Date: auditDate, // Use the entered audit date
+        };
+
+        const serialNumber = chassisNumber; // Adjust as necessary
+        setChassisNumber(chassisNumber);
+        const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+          JSON.stringify(dataList)
+        )}&Serial_Number=${serialNumber}`;
+
+        const response = await axios.post(apiUrl, {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        });
+
+        if (response.status === 200) {
+          status = 200;
+          setError('');
+        }
+      }
+      status === 200 ? toast.success(`Data submitted successfully for ${chassisNumber}`) : toast.error('Error submitting data');
+      emptyModel();
+    } catch (error) {
+      console.error('Error submitting data:', error);
+      setError('Failed to submit data. Please try again.');
+    }
+  };
+
+  const reactSelectPopupStyles = {
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 10000, // Adjust this value as needed
+    }),
+  };
+
+  // Function to handle scanned value
+  const handleScan = (value) => {
+    setChassisNumber(value);
+    setModalVisible(false); // Set the scanned value in input field
+    fetchChassisNumber(value);
+  };
+  const handleQrClick = () => {
+    setModalVisible(true);
+  };
+
   return (
-    <CContainer fluid>
-      <Navbar
-        shift={shift}
-        currentTime={currentTime}
-        heading={"QG Defect Entry Screen Zone - 1"}
-      />
-      <div className="container-wrapper">
-        {/* Container 1 */}
-        <div className="box-container box1">
-          <div className="input-group">
-            <div className="input-item">
-              <CFormLabel className="input-label ">Chassis Number</CFormLabel>
-              <CFormInput
-                value={headerDetails.SFC}
-                className="input-box w-auto"
-                onChange={handleSerialChange}
-                onKeyPress={handleKeyPress}
-                placeholder="Enter 6-digit Chassis Number"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Shift</CFormLabel>
-              <CFormInput
-                value={headerDetails.SHIFT || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Fuel Type</CFormLabel>
-              <CFormInput
-                value={headerDetails.FUELTYPE || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Model</CFormLabel>
-              <CFormInput
-                value={headerDetails.MODEL || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              {" "}
-              <CFormLabel className="input-label">Line</CFormLabel>
-              <CFormInput
-                value={headerDetails.LINE || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Model Description</CFormLabel>
-              <CFormInput
-                value={headerDetails.MODEL_DESC || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-          </div>
-          <div className="input-group">
-            <div className="input-item">
-              <CFormLabel className="input-label">Fert Code</CFormLabel>
-              <CFormInput
-                value={headerDetails.MODEL_DESC || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Halb Code</CFormLabel>
-              <CFormInput
-                value={headerDetails.MODEL_DESC || ""}
-                readOnly
-                className="input-box disabled-look"
-              />
-            </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">Date</CFormLabel>
-              <div style={{ position: "relative" }}>
-                <CFormInput
-                  className="input-box disabled-look"
-                  readOnly
-                  value={date ? date.toLocaleDateString() : ""}
-                  onClick={toggleDatePicker}
+    <>
+      <div className="container-fluid pt-3">
+        {/* 1st Div: 4 divs side by side */}
+        <div className="first-section row justify-content-center gap-2">
+          <div className="col-12 row">
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="chassisNumber" className="form-label fw-bold m-0">
+                Chassis Number
+              </label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  id="chassisNumber"
+                  className="form-control"
+                  placeholder="Enter Chassis Number"
+                  onChange={handleChassisNumberChange}
+                  value={chassisNumber}
                 />
-                <FaCalendarAlt
-                  onClick={toggleDatePicker}
-                  readOnly
-                  style={{
-                    position: "absolute",
-                    right: "0px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    paddingBottom: "0.7rem",
-                    cursor: "pointer",
-                    color: "black",
-                  }}
+                <BsQrCode
+                  className="input-group-text p-1"
+                  size={40}
+                  onClick={handleQrClick}
+                  style={{ cursor: 'pointer' }}
+                  color="var(--cui-primary)"
                 />
-                {isDatePickerOpen && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      zIndex: 1000,
-                      paddingRight: "15px",
-                    }}
-                  >
-                    <DatePicker
-                      selected={date}
-                      onChange={(date) => {
-                        setDate(date);
-                        setDatePickerOpen(false);
-                      }}
-                      onClickOutside={() => setDatePickerOpen(false)}
-                      inline
-                    />
-                  </div>
-                )}
               </div>
+              <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+                <CModalHeader className="fw-bold">Scan Bar/QR code</CModalHeader>
+                <CModalBody className="p-0">
+                  <BarcodeScanner onScan={handleScan} />
+                </CModalBody>
+              </CModal>
+            </div>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="engineNumber" className="form-label fw-bold m-0">
+                Engine Number
+              </label>
+              <input
+                type="text"
+                id="engineNumber"
+                className="form-control disabled-input"
+                value={serialInfo.Engine_Number}
+                disabled={true}
+              />
             </div>
 
-            <div className="input-item">
-              <CFormLabel className="input-label">
-                Check Man
-                <span style={{ color: "red", marginLeft: "0px" }}>*</span>
-              </CFormLabel>
-              <CFormSelect
-                className="input-box"
-                value={selectedCheckman}
-                onChange={handleCheckmanChange}
-              >
-                <option value="" disabled>
-                  Select Name
-                </option>
-                {checkmanNames.map((checkman, index) => (
-                  <option key={index} value={checkman.CHECKMAN_NAME}>
-                    {checkman.SEL_NAME}
-                  </option>
-                ))}
-              </CFormSelect>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Order No.
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Order_Number} disabled={true} />
             </div>
-            <div className="input-item">
-              <CFormLabel className="input-label">
-                Rework Man
-                <span style={{ color: "red", marginLeft: "5px" }}>*</span>
-              </CFormLabel>
-              <CFormInput className="input-box" />
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Series
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Series} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="model" className="form-label fw-bold m-0">
+                Model
+              </label>
+              <input type="text" id="model" className="form-control disabled-input" value={serialInfo.Model} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Model Desc
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Part_Description} disabled={true} />
+            </div>
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-4">
+              <label htmlFor="rolloutDate" className="form-label fw-bold m-0">
+                Rollout Date
+              </label>
+              <input type="text" id="rolloutDate" className="form-control disabled-input" value={serialInfo.Rollout_Date} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-4">
+              <label htmlFor="rolloutShift" className="form-label fw-bold m-0">
+                Rollout Shift
+              </label>
+              <input type="text" value={serialInfo.Shift_Name} id="rolloutShift" className="form-control disabled-input" disabled={true} />
+            </div>
+            <div className="col-12 col-sm-2">
+              <label htmlFor="totalDefectCount" className="form-label fw-bold m-0">
+                Total Defects
+              </label>
+              <input type="text" id="totalDefectCount" className="form-control disabled-input" value={totalDefects} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-2">
+              <label htmlFor="totalDemerit" className="form-label fw-bold m-0">
+                Total Demerit
+              </label>
+              <input type="text" id="totalDemerit" className="form-control disabled-input" value={totalDemerits} disabled={true} />
+            </div>
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-6">
+              <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
+                Audit Date
+              </label>
+              <div>
+                <DatePicker
+                  selected={auditDate}
+                  onChange={(date) => setAuditDate(date)}
+                  showTimeSelect
+                  disabled={!chassisNumber}
+                  className="form-control w-100"
+                  dateFormat="Pp"
+                  timeFormat="HH:mm"
+                  timeIntervals={1}
+                  timeCaption="Time"
+                  dateFormatCalendar="MMMM"
+                  placeholderText="Select date and time"
+                />
+              </div>
+            </div>
+            <div className="col-12 col-sm-6">
+              <label htmlFor="inspectorName" className="form-label fw-bold m-0">
+                Auditor Name
+              </label>
+              <Select
+                options={auditorOptions}
+                placeholder="Select auditor"
+                isClearable
+                styles={reactSelectPopupStyles}
+                onChange={handleAuditorChange}
+                value={selectedAuditor ? { value: selectedAuditor.value, label: selectedAuditor.label } : null}
+              />
             </div>
           </div>
         </div>
-      </div>
-      <div className="container-wrapper1">
-        <CRow className="mt-4 d-flex align-items-center ">
-          {/* Left container with heading and search input */}
-          <CCol
-            md="8"
-            className="d-flex align-items-center checkpoint-container "
-          >
-            <CFormLabel className="input-label mx-5">
-              Search checkpoints
-            </CFormLabel>
-            <CFormInput
-              value={headerDetails.SHIFT || ""}
-              readOnly
-              className="input-box w-30"
-            />
-            <CButton color="primary" className="search-button me-2">
-              Search
-            </CButton>
-          </CCol>
-          {/* Right container with buttons */}
-          <CCol md="4" className="button-container d-flex justify-content-end">
-            <CButton color="primary" className="me-2">
-              Refresh
-            </CButton>
-            <CButton color="success" className="me-2">
-              Save as Draft
-            </CButton>
-            <CButton onClick={handleSubmit} color="danger">
-              Submit
-            </CButton>
-          </CCol>
-        </CRow>
-      </div>
-      <div className="posttable-container">
-        <CCard>
-          <CCardBody>
-            <div className="posttable-wrapper">
-              <CTable hover>
-                <CTableHead className="th">
-                  <CTableRow>
-                    <CTableHeaderCell scope="col">CHECK POINT</CTableHeaderCell>
-                    <CTableHeaderCell scope="col">
-                      ACTION TAKEN
-                    </CTableHeaderCell>
-                    <CTableHeaderCell scope="col">
-                      ADDITIONAL DEFECT
-                    </CTableHeaderCell>
-                    <CTableHeaderCell scope="col">
-                      INSP. METHOD
-                    </CTableHeaderCell>
-                    <CTableHeaderCell scope="col">REMARKS</CTableHeaderCell>
-                  </CTableRow>
-                </CTableHead>
-                <CTableBody>
-                  {tableDetails.map((item, index) => (
-                    <CTableRow key={index}>
-                      <CTableDataCell>{item.CHECKPOINT}</CTableDataCell>
-                      {/* Toggle Button for OK/NOK */}
-                      <CTableDataCell>
-                        <button
-                          className={`toggle-button ${
-                            rows[index].status === "OK" ? "ok" : "nok"
-                          }`}
-                          onClick={() => handleToggle(index)}
-                        >
-                          {rows[index].status}
-                        </button>
-                      </CTableDataCell>
-                      {/* Defect Dropdown */}
-                      <CTableDataCell>
-                        <div
-                          className="dropdown-container"
-                          style={{ position: "relative" }}
-                          ref={(el) => (dropdownRefs.current[index] = el)}
-                        >
-                          <button
-                            onClick={() => toggleDropdown(index)}
-                            className="dropdown-button"
-                            disabled={rows[index].status === "OK"}
-                          >
-                            Select Defects <span className="down-arrow">▼</span>
-                          </button>
-                          {dropdownOpen === index && (
-                            <div
-                              className="dropdown-menu"
-                              style={{
-                                width: "400px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                                padding: "10px",
-                                border: "1px solid #ccc",
-                                borderRadius: "4px",
-                                position: "absolute",
-                                zIndex: 1000,
-                                backgroundColor: "#fff",
-                                top: "100%",
-                                left: "0",
-                              }}
-                            >
-                              {defectList.map((defect, defectIndex) => (
-                                <div
-                                  key={defectIndex}
-                                  style={{
-                                    width: "100%",
-                                    marginBottom: "5px",
-                                  }}
-                                >
-                                  <CFormCheck
-                                    key={defectIndex}
-                                    type="checkbox"
-                                    label={defect.DEFECT_DESC}
-                                    checked={rows[index].defect.includes(
-                                      defect.DEFECT_DESC
-                                    )}
-                                    onChange={() =>
-                                      handleDefectSelect(
-                                        index,
-                                        defect.DEFECT_DESC
-                                      )
-                                    }
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </CTableDataCell>
-                      {/* Inspection Method */}
-                      <CTableDataCell>{item.INSPECTION_METHOD}</CTableDataCell>
-                      {/* Remarks Input */}
-                      <CTableDataCell>
-                        <CFormInput
-                          value={rows[index].remarks}
-                          onChange={(e) => handleRemarksChange(index, e)}
-                        />
-                      </CTableDataCell>
-                    </CTableRow>
-                  ))}
-                </CTableBody>
-              </CTable>
+
+        <hr />
+        {/* 2nd Div: Dropdowns and Add button */}
+        <div className="container-fluid">
+          <div className="row align-items-center">
+            <div className="col-md-8 d-flex flex-row row">
+              <div className="col-4" style={{ zIndex: 1100 }}>
+                <label htmlFor="selectPart" className="form-label fw-bold m-0">
+                  Select Part
+                </label>
+                <Select
+                  options={partOptions}
+                  placeholder="Select a part"
+                  isClearable
+                  onChange={handlePartChange}
+                  value={selectedPart ? { value: selectedPart.value, label: selectedPart.label } : null}
+                />
+              </div>
+              <div className="col-8" style={{ zIndex: 1100 }}>
+                <label htmlFor="selectDefects" className="form-label fw-bold m-0">
+                  Select Defects
+                </label>
+                <Select
+                  options={defectOptions}
+                  placeholder="Select defects"
+                  isClearable
+                  isMulti
+                  value={selectedDefects} // Bind the selected defects to the component
+                  onChange={handleDefectChange} // Set the onChange prop
+                />
+              </div>
             </div>
-          </CCardBody>
-        </CCard>
+            <div className="col-md-4">
+              <div className="d-flex justify-content-end gap-2  flex-wrap">
+                <CButton className="btn btn-primary fw-bold" onClick={handleAdd} disabled={loading}>
+                  {loading ? <CSpinner size="sm" /> : '+ Add'}
+                </CButton>
+                <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
+                  Reset
+                </CButton>
+                <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
+                  Submit
+                </CButton>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Table Section */}
+        {tableEntries.length > 0 && (
+          // <div className=" my-4 table-section" style={{ maxHeight: '400px', overflowY: 'auto', position: 'relative' }}>
+          <div className="d-flex flex-column my-3 " style={{ height: '100vh' }}>
+            <div className="flex-grow-1" style={{ overflowY: 'auto' }}>
+              <table
+                className="table table-striped table-hover table-bordered"
+                style={{
+                  // minHeight: '200px',
+                  minWidth: '800px', // Set the minimum height
+                  // maxHeight: 'none', // No maximum height limit
+                  // overflowY: 'auto', // Enable vertical scrolling
+                  // overflowX: 'auto', // Enable horizontal scrolling
+                }}
+              >
+                <thead className="position-sticky top-0" style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8f9fa' }}>
+                  <tr>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '7rem' }}>
+                      PART NAME
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '20rem' }}>
+                      DEFECT DESC
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '6rem' }}>
+                      DEMERIT
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
+                      TSELF
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      HEAD
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      CATEGORY
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      ZONE
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
+                      Delete
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableEntries.map((row, index) => (
+                    <tr key={index}>
+                      <td className="text-center align-middle">{row.PART}</td>
+                      <td className="text-center align-middle">{row.DEFECT_DESC}</td>
+                      <td className="text-center align-middle">{row.DEMERIT}</td>
+                      <td className="text-center align-middle">{row.TSELF}</td>
+                      <td className="text-center align-middle">{row.HEAD}</td>
+                      <td className="text-center align-middle">{row.CATEGORY}</td>
+                      <td className="text-center align-middle">{row.ZONE}</td>
+                      <td className="text-center align-middle">
+                        <FaTrash
+                          style={{ cursor: 'pointer' }}
+                          size={25}
+                          color="red"
+                          onClick={() => handleDelete(index, row.DEFECT_DESC, row.DEMERIT)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* </div> */}
+            </div>
+          </div>
+        )}
       </div>
-      <CTable className="observations-table" striped>
-        <CTableHead className="observations-header">
-          <CTableRow>
-            <CTableHeaderCell>SERIAL NUMBER</CTableHeaderCell>
-            <CTableHeaderCell>OBSERVATIONS</CTableHeaderCell>
-          </CTableRow>
-        </CTableHead>
-        <CTableBody>
-          {data.map((serial) => (
-            <CTableRow key={serial}>
-              <CTableDataCell>{serial}</CTableDataCell>
-              <CTableDataCell>
-                <input type="text" className="observation-input" />
-              </CTableDataCell>
-            </CTableRow>
-          ))}
-        </CTableBody>
-      </CTable>
-    </CContainer>
+    </>
   );
 };
+
 export default Checkmansheet;

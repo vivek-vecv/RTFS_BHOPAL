@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   CCard,
   CCardBody,
@@ -16,44 +16,32 @@ import {
   CTableDataCell,
   CContainer,
   CForm,
-} from "@coreui/react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { Torque_button_click, headers } from "../apis/apipath.jsx";
-
-import "./torque.css"; // Import the custom CSS
-
+} from '@coreui/react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { Torque_button_click, headers } from '../apis/apipath.jsx';
 const TorqueDashboard = () => {
   const location = useLocation();
-  const {
-    serialNumber,
-    lineName,
-    stationName,
-    orderNumber,
-    model,
-    partDescription,
-    partNumber,
-    operator,
-  } = location.state || {}; // Retrieve values from state
+  const { serialNumber, lineName, stationName, orderNumber, model, partDescription, partNumber, operator } = location.state || {}; // Retrieve values from state
   const navigate = useNavigate();
   const [data, setData] = useState({
-    serialNumber: serialNumber || "",
-    orderNumber: orderNumber || "",
-    model: model || "",
-    partNumber: partNumber || "",
-    partDescription: partDescription || "",
-    operator: operator || "",
+    serialNumber: serialNumber || '',
+    orderNumber: orderNumber || '',
+    model: model || '',
+    partNumber: partNumber || '',
+    partDescription: partDescription || '',
+    operator: operator || '',
     tableData: [],
   });
-  console.log("orderNum:", orderNumber);
+  console.log('orderNum:', orderNumber);
 
   useEffect(() => {
-    console.log("Serial Number:", serialNumber);
-    console.log("Line Name:", lineName);
-    console.log("Station Name:", stationName);
+    console.log('Serial Number:', serialNumber);
+    console.log('Line Name:', lineName);
+    console.log('Station Name:', stationName);
     const fetchTorqueData = async () => {
       if (!serialNumber || !lineName || !stationName) {
-        console.error("Missing required parameters");
+        console.error('Missing required parameters');
         return;
       }
 
@@ -68,11 +56,7 @@ const TorqueDashboard = () => {
           headers,
         });
 
-        if (
-          response.status === 200 &&
-          response.data &&
-          response.data.Torque_Information
-        ) {
+        if (response.status === 200 && response.data && response.data.Torque_Information) {
           const torqueInfo = response.data.Torque_Information; // Assuming Torque_Information is the correct array
 
           setData((prevState) => ({
@@ -80,10 +64,10 @@ const TorqueDashboard = () => {
             tableData: torqueInfo, // Set the tableData to the Torque_Information array
           }));
         } else {
-          console.error("Failed to retrieve the correct data structure.");
+          console.error('Failed to retrieve the correct data structure.');
         }
       } catch (error) {
-        console.error("Failed to fetch torque data", error);
+        console.error('Failed to fetch torque data', error);
       }
     };
 
@@ -91,7 +75,7 @@ const TorqueDashboard = () => {
   }, [serialNumber, lineName, stationName]);
 
   const handleStationStatusButtonClick = () => {
-    navigate("/stationStatus", {
+    navigate('/stationStatus', {
       state: {
         serialNumber,
         orderNumber,
@@ -110,12 +94,12 @@ const TorqueDashboard = () => {
         <CForm>
           <CRow className="mb-3">
             {[
-              { label: "Serial Number", value: data.serialNumber },
-              { label: "Order Number", value: data.orderNumber },
-              { label: "Model", value: data.model },
-              { label: "Part Number", value: data.partNumber },
-              { label: "Part Description", value: data.partDescription },
-              { label: "Operator", value: data.operator },
+              { label: 'Serial Number', value: data.serialNumber },
+              { label: 'Order Number', value: data.orderNumber },
+              { label: 'Model', value: data.model },
+              { label: 'Part Number', value: data.partNumber },
+              { label: 'Part Description', value: data.partDescription },
+              { label: 'Operator', value: data.operator },
             ].map((item, index) => (
               <CCol key={index} xs={12} sm={6} lg={2}>
                 <CFormLabel className="tlabel">{item.label}</CFormLabel>
@@ -157,7 +141,7 @@ const TorqueDashboard = () => {
         <div className="button-container">
           <button className="hbutton">Checkpoint</button>
           <button onClick={handleStationStatusButtonClick} className="hbutton">
-            {" "}
+            {' '}
             Process Data
           </button>
 

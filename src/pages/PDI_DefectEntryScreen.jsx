@@ -1,415 +1,637 @@
-import React, { useState, useEffect } from "react";
-import {
-  CNavbar,
-  CNavbarBrand,
-  CNavbarNav,
-  CNavItem,
-  CFormLabel,
-  CFormInput,
-  CNavLink,
-  CButton,
-  CFormSelect,
-  CTable,
-  CTableHead,
-  CTableRow,
-  CTableHeaderCell,
-  CTableBody,
-  CTableDataCell,
-} from "@coreui/react";
-import axios from "axios";
-import "./PDI_DefectEntryScreen.css"; // Import the CSS file
-import logo from "../images/eicher_logo.png";
-import Navbar from "./navbar.jsx";
-import ShiftAndTime from "./ShiftAndTime.jsx";
-
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import Select from 'react-select';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { CButton, CSpinner, CModal, CModalHeader, CModalBody } from '@coreui/react';
+import { FaTrash } from 'react-icons/fa';
+import { toast } from 'react-toastify';
+import BarcodeScanner from './BarcodeScanner.jsx';
+import { BsQrCode } from 'react-icons/bs';
 const PDI_DefectEntryScreen = () => {
-  const { currentTime, shift } = ShiftAndTime();
-  const [chassisNumber, setChassisNumber] = useState("");
-  const [fullChassisNumber, setFullChassisNumber] = useState("");
-  const [engineNumber, setEngineNumber] = useState("");
-  const [model, setModel] = useState("");
-  const [series, setSeries] = useState("");
-  const [rolloutDate, setRolloutDate] = useState("");
-  const [shiftOptions, setShiftOptions] = useState([]);
+  const [process, setProcess] = useState('static');
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
-  const [operatorOptions, setOperatorOptions] = useState([]);
   const [partOptions, setPartOptions] = useState([]);
   const [defectOptions, setDefectOptions] = useState([]);
-  const processName = "Static";
-  const [isDisabled, setIsDisabled] = useState(true);
+  const [error, setError] = useState('');
   const [tableEntries, setTableEntries] = useState([]);
+  const [serialInfo, setSerialInfo] = useState({
+    Series: '',
+    Engine_Number: '',
+    Model: '',
+    Rollout_Date: '',
+    Serial_Number: '',
+  });
+  const [selectedDefects, setSelectedDefects] = useState([]);
+  const [selectedPart, setSelectedPart] = useState(null);
+  const [selectedAuditor, setSelectedAuditor] = useState(null);
+  const [totalDefects, setTotalDefects] = useState(0);
+  const [totalDemerits, setTotalDemerits] = useState(0);
+  const [auditDate, setAuditDate] = useState('');
+  const [isScannerVisible, setScannerVisible] = useState(false);
 
-  const apiUrl = "http://10.119.1.101:9898/rest/api/getSerialNoDetailsForPDI";
-  const inspectorApiUrl =
-    "http://10.119.1.101:9898/rest/api/getAllInspectorsForPDI";
-  const partApiUrl =
-    "http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoProcess";
+  const emptyModel = () => {
+    setTotalDefects(0);
+    setTotalDemerits(0);
+    setChassisNumber('');
+    setAuditorOptions([]);
+    setPartOptions([]);
+    setDefectOptions([]);
+    setSelectedPart(null);
+    setSelectedAuditor(null);
+    setSelectedDefects([]);
+    setTableEntries([]);
+    setSerialInfo({
+      Series: '',
+      Engine_Number: '',
+      Model: '',
+      Rollout_Date: '',
+      Serial_Number: '',
+      Part_Description: '',
+      Order_Number: '',
+      Shift_Name: '',
+    });
+    setSelectedPart(null);
+    setAuditDate('');
+  };
+  const fetchSerialNumberDetails = async (serialNumber) => {
+    try {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForPDI/?Serial_Number=${serialNumber}`, {
+        auth: {
+          username: 'arun',
+          password: '123456',
+        },
+      });
 
-  const defectApiUrl =
-    "http://10.119.1.101:9898/rest/api/getAllDefectsForPDIPart";
-  const handleChassisNumberChange = (e) => {
-    const chassisValue = e.target.value;
-    setChassisNumber(chassisValue);
+      if (response.status === 200) {
+        const serialInformation = response.data.Serial_Information[0];
+        setSerialInfo({
+          Series: serialInformation.Series,
+          Engine_Number: serialInformation.Engine_Number,
+          Model: serialInformation.Model,
+          Rollout_Date: serialInformation.Rollout_Date,
+          Serial_Number: serialInformation.Serial_Number,
+          Shift_Name: serialInformation.Shift_Name,
+          Order_Number: serialInformation.Order_Number,
+          Part_Description: serialInformation.Part_Description,
+        });
 
-    console.log(chassisValue);
-
-    // Trigger API call when chassis number reaches full length (adjust the length as per your requirement)
-    if (chassisValue.length > 4) {
-      fetchChassisDetails(chassisValue);
+        await fetchPartsData(serialInformation.Series, process);
+        return serialInformation.Serial_Number;
+      }
+    } catch (error) {
+      console.error('Error fetching serial number details:', error);
     }
   };
 
-  const fetchChassisDetails = async (chassisNumber) => {
+  const fetchChassisNumber = async (value) => {
+    try {
+      if (value.length == 6 || value.length == 17) {
+        const chassis = await fetchSerialNumberDetails(value);
+        if (chassis) {
+          setChassisNumber(chassis);
+          fetchAuditors();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching serial details :', error);
+    }
+  };
+
+  const handleChassisNumberChange = async (e) => {
+    const value = e.target.value;
+    setChassisNumber(value);
+    fetchChassisNumber(value);
+  };
+
+  const fetchPartsData = async (series, processName) => {
     try {
       const response = await axios.get(
-        `${apiUrl}?Serial_Number=${chassisNumber}`
+        `http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoProcess?Model=${series}&Process_Name=${processName}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
       );
-      // Assuming response format matches the one you provided
-      const serialInfo = response.data.Serial_Information[0];
 
-      // Populate form fields with the data
-      setEngineNumber(serialInfo.Engine_Number);
-      setModel(serialInfo.Model);
-      setSeries(serialInfo.Series);
-      setRolloutDate(serialInfo.Rollout_Date);
-      const model = response.data.Serial_Information[0].Series; // Extract model from the chassis API response
-      setModel(model); // Store the model in state
-
-      // Fetch part options using the retrieved model
-      fetchPartOptions(model);
-      // Enable the disabled inputs
-      setIsDisabled(false);
-      fetchInspectorList();
+      if (response.status === 200) {
+        const partsList = response.data['Parts Data_List'] || [];
+        setPartOptions(
+          partsList.map((part) => ({
+            value: part.Part_Name,
+            label: part.Part_Name,
+          }))
+        );
+      }
     } catch (error) {
-      console.error("Error fetching chassis details:", error);
+      console.error('Error fetching parts data:', error);
     }
   };
 
-  const fetchInspectorList = async () => {
-    try {
-      const response = await axios.get(inspectorApiUrl);
-
-      // Extract the 'Inspector_list' from the API response
-      const inspectorList = response.data.Inspector_list.map(
-        (item) => item.Inspector
-      );
-
-      setAuditorOptions(inspectorList); // Set the list of inspectors
-    } catch (error) {
-      console.error("Error fetching inspector list:", error);
-      setAuditorOptions([]); // Ensure it remains an array on error
+  const handlePartChange = async (selectedOption) => {
+    if (selectedOption) {
+      const selectedPartName = selectedOption.value; // Get the selected part's name
+      await fetchDefectsForPart(serialInfo.Series, selectedPartName);
+      setSelectedPart(selectedOption);
+      // Reset the selected defects when part changes
+      setSelectedDefects([]);
     }
   };
 
-  const fetchPartOptions = async (model) => {
+  const fetchDefectsForPart = async (seriesName, partName) => {
     try {
       const response = await axios.get(
-        `${partApiUrl}?Model_Name=${model}&Process_Name=${processName}`
+        `http://10.119.1.101:9898/rest/api/getAllDefectsForPDIPart?Model_Name=${seriesName}&Part_name=${partName}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
       );
 
-      console.log("parts response", response.data); // Check the response structure
-
-      // Access the "Parts Data_List" array and map the part names
-      setPartOptions(response.data["Parts Data_List"]); // Adjust based on the actual key
+      if (response.status === 200) {
+        const defectsList = response.data.Defect_List || [];
+        setDefectOptions(
+          defectsList.map((defect) => ({
+            value: defect.Defect_Name, // Using Defect_Name directly
+            label: defect.Defect_Name, // Using Defect_Name for description as well
+          }))
+        );
+      }
     } catch (error) {
-      console.error(
-        "Error fetching part options:",
-        error.response?.data || error.message
-      );
-      setPartOptions([]); // Clear options in case of error
+      console.error('Error fetching defects for part:', error);
     }
   };
 
-  const handlePartChange = (e) => {
-    const selectedPartValue = e.target.value;
-    setSelectedPart(selectedPartValue);
-    fetchDefectsForPart(selectedPartValue);
-  };
-
-  const fetchDefectsForPart = async (part) => {
+  const fetchAuditors = async () => {
     try {
-      const response = await axios.get(
-        `${defectApiUrl}?Model_Name=${model}&Part_name=${part}`
-      );
-      setDefectOptions(response.data.Defect_List);
+      const response = await axios.get('http://10.119.1.101:9898/rest/api/getAllInspectorsForPDI', {
+        auth: {
+          username: 'arun',
+          password: '123456',
+        },
+      });
+
+      if (response.status === 200) {
+        const auditorsList = response.data.Inspector_list || [];
+        setAuditorOptions(
+          auditorsList.map((auditor) => ({
+            value: auditor.Inspector,
+            label: auditor.Inspector,
+          }))
+        );
+      }
     } catch (error) {
-      setDefectOptions([]);
+      console.error('Error fetching auditors:', error);
     }
+  };
+
+  const handleAuditorChange = async (selectedOption) => {
+    if (selectedOption) {
+      setSelectedAuditor(selectedOption);
+    }
+  };
+
+  useEffect(() => {
+    if (chassisNumber) {
+      fetchHeaderData(chassisNumber);
+    }
+  }, [chassisNumber]);
+
+  const fetchHeaderData = (chassisNumber) => {
+    console.log(`Fetching data for chassis: ${chassisNumber}`);
+    // setIsDisabled(false);
+  };
+
+  const handleDefectChange = (selectedOptions) => {
+    setSelectedDefects(selectedOptions); // Update state with selected defects
+  };
+
+  const handleAdd = async () => {
+    if (!selectedPart || selectedDefects.length === 0) {
+      toast.warn('Select part or defect(s) to add', { autoClose: 3000 });
+      return;
+    }
+
+    const model = serialInfo.Series; // Assuming you want to use this model
+    let newDemerits = 0; // Initialize a variable to calculate total demerits
+    const newEntries = []; // Store newly added entries
+
+    // Loop through each selected defect
+    setLoading(true);
+    for (const selectedDefect of selectedDefects) {
+      // Check if the entry already exists
+      const exists = tableEntries.some((entry) => entry.PART === selectedPart.value && entry.DEFECT_DESC === selectedDefect.value);
+
+      if (exists) {
+        toast.error(`Entry already exists for part: ${selectedPart.value} and defect: ${selectedDefect.value}`, { autoClose: 3000 });
+        setLoading(false);
+
+        continue; // Skip this defect if it already exists
+      }
+
+      const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForPDI?part_ID=${encodeURIComponent(
+        selectedPart.value
+      )}&Defect_Desc=${encodeURIComponent(selectedDefect.value)}&Model=${encodeURIComponent(model)}`;
+
+      try {
+        const response = await axios.get(apiUrl, {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        });
+
+        if (response.status === 200) {
+          const defectInfo = response.data.Defect_Information || [];
+
+          defectInfo.forEach((info) => {
+            const tableRow = {
+              PART: info.Part_Name,
+              DEFECT_DESC: info.Defect_Desc,
+              DEMERIT: info.Demerit,
+              TSELF: info.Tself,
+              AGGREGATE: info.Aggregate,
+              HEAD: info.Head,
+              CATEGORY: info.Category,
+              ZONE: 'N/A',
+              SFC: chassisNumber,
+              STATUS: 'NOK',
+              DEFECT_CODE: info.Defect_Code,
+              // Fallback for zone
+            };
+
+            newEntries.push(tableRow); // Store new entries
+            newDemerits += parseInt(info.Demerit) || 0; // Use parseFloat and fallback to 0 if NaN
+            setSelectedDefects([]);
+          });
+        }
+        setLoading(false);
+      } catch (error) {
+        setLoading(false);
+        console.error('Error fetching defect data:', error);
+        alert('Failed to fetch defect data for ' + selectedDefect.value);
+      }
+    }
+
+    // Update the table entries and totals after the loop
+    setTableEntries((prevEntries) => [...prevEntries, ...newEntries]);
+    setTotalDefects((prevTotal) => prevTotal + newEntries.length); // Update total defects
+    setTotalDemerits((prevTotal) => prevTotal + newDemerits); // Update total demerits
+  };
+
+  useEffect(() => {
+    fetchAuditors();
+  }, []);
+
+  const handleDelete = (index, defectValue, demeritValue) => {
+    setTableEntries((prevEntries) => {
+      const updatedEntries = prevEntries.filter((_, i) => i !== index); // Remove the entry at the specified index
+      return updatedEntries;
+    });
+
+    // Update total defects and demerits
+    setTotalDefects((prevTotal) => prevTotal - 1); // Decrease the defect count by 1
+    setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0); // Decrease total demerits
+  };
+
+  //==============================Submit function code ===================================================
+
+  const handleSubmit = async () => {
+    if (tableEntries.length === 0) {
+      toast.error('No entries in table.'); // Set error if date is blank
+      return;
+    }
+
+    if (!auditDate) {
+      toast.error('Please select an inspection date and time.');
+      return; // Exit the function if auditDate is empty
+    }
+
+    try {
+      let status;
+      for (const entry of tableEntries) {
+        const dataList = {
+          Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
+          Model: serialInfo.Model, // Adjust as necessary
+          Category: entry.CATEGORY,
+          Part_Name: entry.PART,
+          Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
+          Defect_Desc: entry.DEFECT_DESC,
+          Station: 'PAG', // Adjust as necessary
+          Demerit: entry.DEMERIT,
+          Tself: entry.TSELF,
+          Head: entry.HEAD,
+          Aggregate: entry.AGGREGATE,
+          Status: 'NOK', // Adjust as necessary
+          Audit_Date: auditDate, // Use the entered audit date
+        };
+
+        const serialNumber = chassisNumber; // Adjust as necessary
+        setChassisNumber(chassisNumber);
+        const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+          JSON.stringify(dataList)
+        )}&Serial_Number=${serialNumber}`;
+
+        const response = await axios.post(apiUrl, {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        });
+
+        if (response.status === 200) {
+          status = 200;
+          setError('');
+        }
+      }
+      status === 200 ? toast.success(`Data submitted successfully for ${chassisNumber}`) : toast.error('Error submitting data');
+      emptyModel();
+    } catch (error) {
+      console.error('Error submitting data:', error);
+      setError('Failed to submit data. Please try again.');
+    }
+  };
+
+  const reactSelectPopupStyles = {
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 10000, // Adjust this value as needed
+    }),
+  };
+
+  // Function to handle scanned value
+  const handleScan = (value) => {
+    setChassisNumber(value);
+    setModalVisible(false); // Set the scanned value in input field
+    fetchChassisNumber(value);
+  };
+  const handleQrClick = () => {
+    setModalVisible(true);
   };
 
   return (
-    <div>
-      <Navbar
-        shift={shift}
-        currentTime={currentTime}
-        heading={"PDI Defect Entry Screen"}
-      />
+    <>
+      <div className="container-fluid pt-3">
+        {/* 1st Div: 4 divs side by side */}
+        <div className="first-section row justify-content-center gap-2">
+          <div className="col-12 row">
+            <div className=" col-12 col-sm-6 col-md-4">
+              <label htmlFor="chassisNumber" className="form-label fw-bold m-0">
+                Chassis Number
+              </label>
+              <div className="input-group">
+                <input
+                  type="text"
+                  id="chassisNumber"
+                  className="form-control"
+                  placeholder="Enter Chassis Number"
+                  onChange={handleChassisNumberChange}
+                  value={chassisNumber}
+                />
+                <BsQrCode
+                  className="input-group-text p-1"
+                  size={40}
+                  onClick={handleQrClick}
+                  style={{ cursor: 'pointer' }}
+                  color="var(--cui-primary)"
+                />
+                <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
+                  <CModalHeader className="fw-bold">Scan Bar/QR code</CModalHeader>
+                  <CModalBody className="p-0">
+                    <BarcodeScanner onScan={handleScan} />
+                  </CModalBody>
+                </CModal>
+              </div>
+            </div>
 
-      {/* 1st Div: 4 divs side by side */}
-      <div className="first-section">
-        <div className="div1 div_item">
-          <CFormLabel htmlFor="chassisNumber" className="input-label">
-            Chassis Number
-          </CFormLabel>
-          <CFormInput
-            type="text"
-            id="chassisNumber"
-            className="input-box"
-            placeholder="Enter Chassis Number"
-            value={chassisNumber}
-            onChange={handleChassisNumberChange}
-          />
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="engineNumber" className="form-label fw-bold m-0">
+                Engine Number
+              </label>
+              <input
+                type="text"
+                id="engineNumber"
+                className="form-control disabled-input"
+                value={serialInfo.Engine_Number}
+                disabled={true}
+              />
+            </div>
 
-          <CFormLabel htmlFor="engineNumber" className="input-label">
-            Engine Number
-          </CFormLabel>
-          <CFormInput
-            type="text"
-            id="engineNumber"
-            value={engineNumber}
-            disabled
-            className="input-box disabled-input"
-          />
-        </div>
-        <div className="div2 div_item">
-          <div className="input-row">
-            <div>
-              <CFormLabel htmlFor="rolloutDate" className="input-label">
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Order No.
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Order_Number} disabled={true} />
+            </div>
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Series
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Series} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="model" className="form-label fw-bold m-0">
+                Model
+              </label>
+              <input type="text" id="model" className="form-control disabled-input" value={serialInfo.Model} disabled={true} />
+            </div>
+            <div className="col-12 col-sm-6 col-md-4">
+              <label htmlFor="series" className="form-label fw-bold m-0">
+                Model Desc
+              </label>
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Part_Description} disabled={true} />
+            </div>
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-4">
+              <label htmlFor="rolloutDate" className="form-label fw-bold m-0">
                 Rollout Date
-              </CFormLabel>
-              <CFormInput
-                type="text"
-                id="rolloutDate"
-                className="input-box  disabled-input"
-                value={rolloutDate}
-                disabled={true}
-              />
+              </label>
+              <input type="text" id="rolloutDate" className="form-control disabled-input" value={serialInfo.Rollout_Date} disabled={true} />
             </div>
-            <div>
-              <CFormLabel htmlFor="rolloutShift" className="input-label">
+            <div className="col-12 col-sm-4">
+              <label htmlFor="rolloutShift" className="form-label fw-bold m-0">
                 Rollout Shift
-              </CFormLabel>
-              <CFormInput
-                type="text"
-                id="rolloutShift"
-                className="input-box  disabled-input"
-                disabled={true}
-              />
+              </label>
+              <input type="text" value={serialInfo.Shift_Name} id="rolloutShift" className="form-control disabled-input" disabled={true} />
             </div>
-          </div>
-          <div>
-            <CFormLabel htmlFor="model" className="input-label">
-              Model
-            </CFormLabel>
-            <CFormInput
-              type="text"
-              id="model"
-              className="input-box  disabled-input"
-              value={model}
-              disabled={true}
-            />
-          </div>
-        </div>
-        <div className="div3 div_item">
-          <div className="input-row">
-            <div>
-              <CFormLabel htmlFor="totalDefectCount" className="input-label  ">
-                Total Defect Count
-              </CFormLabel>
-              <CFormInput
-                type="text"
-                id="totalDefectCount"
-                className="input-box  disabled-input"
-                disabled={true}
-              />
+            <div className="col-12 col-sm-2">
+              <label htmlFor="totalDefectCount" className="form-label fw-bold m-0">
+                Total Defects
+              </label>
+              <input type="text" id="totalDefectCount" className="form-control disabled-input" value={totalDefects} disabled={true} />
             </div>
-            <div>
-              <CFormLabel htmlFor="totalDemerit" className="input-label">
+            <div className="col-12 col-sm-2">
+              <label htmlFor="totalDemerit" className="form-label fw-bold m-0">
                 Total Demerit
-              </CFormLabel>
-              <CFormInput
-                type="text"
-                id="totalDemerit"
-                className="input-box disabled-input"
-                disabled={true}
+              </label>
+              <input type="text" id="totalDemerit" className="form-control disabled-input" value={totalDemerits} disabled={true} />
+            </div>
+          </div>
+          <div className="col-12 row">
+            <div className="col-12 col-sm-6">
+              <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
+                Audit Date
+              </label>
+              <div>
+                <DatePicker
+                  selected={auditDate}
+                  onChange={(date) => setAuditDate(date)}
+                  showTimeSelect
+                  disabled={!chassisNumber}
+                  className="form-control w-100"
+                  dateFormat="Pp"
+                  timeFormat="HH:mm"
+                  timeIntervals={1}
+                  timeCaption="Time"
+                  dateFormatCalendar="MMMM"
+                  placeholderText="Select date and time"
+                />
+              </div>
+            </div>
+            <div className="col-12 col-sm-6">
+              <label htmlFor="inspectorName" className="form-label fw-bold m-0">
+                Auditor Name
+              </label>
+              <Select
+                options={auditorOptions}
+                placeholder="Select auditor"
+                isClearable
+                styles={reactSelectPopupStyles}
+                onChange={handleAuditorChange}
+                value={selectedAuditor ? { value: selectedAuditor.value, label: selectedAuditor.label } : null}
               />
             </div>
           </div>
-          <div>
-            <CFormLabel htmlFor="series" className="input-label">
-              Series
-            </CFormLabel>
-            <CFormInput
-              type="text"
-              id="series"
-              className="input-box disabled-input"
-              value={series}
-              disabled={true}
-            />
-          </div>
         </div>
 
-        <div className="div4 div_item">
-          <div className="input-row1">
-            <div className="date-div">
-              <CFormLabel
-                htmlFor="inspectionDate"
-                className="input-label required"
-              >
-                Inspection Date
-              </CFormLabel>
-              <CFormInput
-                type="date"
-                id="inspectionDate"
-                className="date-input-box"
-                required
-              />
+        <hr />
+        {/* 2nd Div: Dropdowns and Add button */}
+        <div className="container-fluid">
+          <div className="row align-items-center">
+            <div className="col-md-8 d-flex flex-row row">
+              <div className="col-4" style={{ zIndex: 1100 }}>
+                <label htmlFor="selectPart" className="form-label fw-bold m-0">
+                  Select Part
+                </label>
+                <Select
+                  options={partOptions}
+                  placeholder="Select a part"
+                  isClearable
+                  onChange={handlePartChange}
+                  value={selectedPart ? { value: selectedPart.value, label: selectedPart.label } : null}
+                />
+              </div>
+              <div className="col-8" style={{ zIndex: 1100 }}>
+                <label htmlFor="selectDefects" className="form-label fw-bold m-0">
+                  Select Defects
+                </label>
+                <Select
+                  options={defectOptions}
+                  placeholder="Select defects"
+                  isClearable
+                  isMulti
+                  value={selectedDefects} // Bind the selected defects to the component
+                  onChange={handleDefectChange} // Set the onChange prop
+                />
+              </div>
             </div>
-            <div className="shift-div">
-              <CFormLabel
-                htmlFor="inspectionShift"
-                className="input-label required"
-              >
-                Inspection Shift
-              </CFormLabel>
-              <CFormSelect
-                id="inspectionShift"
-                className="input-box font-dropdown"
-                required
-              >
-                {shiftOptions.map((shift, index) => (
-                  <option key={index}>{shift.SHIFT_NAME}</option>
-                ))}
-              </CFormSelect>
-            </div>
-          </div>
-
-          <div className="input-row1">
-            <div className="inspectorName-div">
-              <CFormLabel
-                htmlFor="inspectorName"
-                className="input-label required"
-              >
-                Inspector Name
-              </CFormLabel>
-              <CFormSelect
-                id="inspectorName"
-                className=" input-box font-dropdown p-0 px-2"
-                required
-              >
-                <option>Select Inspector</option>
-                {auditorOptions.length > 0 ? (
-                  auditorOptions.map((inspector, index) => (
-                    <option key={index} value={inspector}>
-                      {inspector}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>No Inspectors Available</option>
-                )}
-              </CFormSelect>
-            </div>
-            <div className="dataOperator-div">
-              <CFormLabel
-                htmlFor="dataEntryOperator"
-                className="input-label required"
-              >
-                Entry Operator
-              </CFormLabel>
-              <CFormSelect
-                id="dataEntryOperator"
-                className=" input-box font-dropdown"
-                required
-              >
-                {operatorOptions.map((operator, index) => (
-                  <option key={index}>{operator.OPERATOR_LIST}</option>
-                ))}
-              </CFormSelect>
+            <div className="col-md-4">
+              <div className="d-flex justify-content-end gap-2  flex-wrap">
+                <CButton className="btn btn-primary fw-bold" onClick={handleAdd} disabled={loading}>
+                  {loading ? <CSpinner size="sm" /> : '+ Add'}
+                </CButton>
+                <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
+                  Reset
+                </CButton>
+                <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
+                  Submit
+                </CButton>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <hr />
-      {/* 2nd Div: Dropdowns and Add button */}
-      <div className="second-section d-flex justify-content-start">
-        <div className="dropdown-wrapper">
-          <CFormLabel htmlFor="selectPart" className="dropdown-label">
-            Select Part
-          </CFormLabel>
-          <CFormSelect
-            id="selectPart"
-            className="dropdown"
-            aria-label="Select Part"
-          >
-            <option>Select Part</option>
-            {Array.isArray(partOptions) && partOptions.length > 0 ? (
-              partOptions.map((part, index) => (
-                <option key={index} value={index}>
-                  {part.Part_Name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No Parts Available</option>
-            )}
-          </CFormSelect>
-        </div>
-        <div className="dropdown-wrapper">
-          <CFormLabel htmlFor="selectDefects" className="dropdown-label">
-            Select Defects
-          </CFormLabel>
-          <CFormSelect
-            id="selectDefects"
-            className="dropdown"
-            aria-label="Select Defects"
-          >
-            <option>Select Defect</option>
-            {Array.isArray(defectOptions) && defectOptions.length > 0 ? (
-              defectOptions.map((defect, index) => (
-                <option key={index} value={defect.DEFECT_Name}>
-                  {defect.DEFECT_DESC || defect.Defect_Name}
-                </option>
-              ))
-            ) : (
-              <option disabled>No Defects Available</option>
-            )}
-          </CFormSelect>
-        </div>
-        <CButton className="add-button">Add</CButton>
+        {/* Table Section */}
+        {tableEntries.length > 0 && (
+          // <div className=" my-4 table-section" style={{ maxHeight: '400px', overflowY: 'auto', position: 'relative' }}>
+          <div className="d-flex flex-column my-3 " style={{ height: '100vh' }}>
+            <div className="flex-grow-1" style={{ overflowY: 'auto' }}>
+              <table
+                className="table table-striped table-hover table-bordered"
+                style={{
+                  // minHeight: '200px',
+                  minWidth: '800px', // Set the minimum height
+                  // maxHeight: 'none', // No maximum height limit
+                  // overflowY: 'auto', // Enable vertical scrolling
+                  // overflowX: 'auto', // Enable horizontal scrolling
+                }}
+              >
+                <thead className="position-sticky top-0" style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8f9fa' }}>
+                  <tr>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '7rem' }}>
+                      PART NAME
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '20rem' }}>
+                      DEFECT DESC
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '6rem' }}>
+                      DEMERIT
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
+                      TSELF
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      HEAD
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      CATEGORY
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col">
+                      ZONE
+                    </th>
+                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
+                      Delete
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {tableEntries.map((row, index) => (
+                    <tr key={index}>
+                      <td className="text-center align-middle">{row.PART}</td>
+                      <td className="text-center align-middle">{row.DEFECT_DESC}</td>
+                      <td className="text-center align-middle">{row.DEMERIT}</td>
+                      <td className="text-center align-middle">{row.TSELF}</td>
+                      <td className="text-center align-middle">{row.HEAD}</td>
+                      <td className="text-center align-middle">{row.CATEGORY}</td>
+                      <td className="text-center align-middle">{row.ZONE}</td>
+                      <td className="text-center align-middle">
+                        <FaTrash
+                          style={{ cursor: 'pointer' }}
+                          size={25}
+                          color="red"
+                          onClick={() => handleDelete(index, row.DEFECT_DESC, row.DEMERIT)}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* </div> */}
+            </div>
+          </div>
+        )}
       </div>
-
-      {/* Table Section */}
-      <div className="table-section">
-        <CTable hover striped bordered>
-          <CTableHead className="th1">
-            <CTableRow>
-              <CTableHeaderCell>PART NAME</CTableHeaderCell>
-              <CTableHeaderCell>DEFECT DESC</CTableHeaderCell>
-              <CTableHeaderCell>DEMERIT</CTableHeaderCell>
-              <CTableHeaderCell>TSELF</CTableHeaderCell>
-              <CTableHeaderCell>AGGREGATE</CTableHeaderCell>
-              <CTableHeaderCell>HEAD</CTableHeaderCell>
-              <CTableHeaderCell>CATEGORY</CTableHeaderCell>
-              <CTableHeaderCell>ZONE</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            {tableEntries.map((row, index) => (
-              <CTableRow key={index}>
-                <CTableDataCell>{row.part}</CTableDataCell>
-                <CTableDataCell>{row.defect}</CTableDataCell>
-                <CTableDataCell>{row.demerit}</CTableDataCell>
-                <CTableDataCell>{row.tself}</CTableDataCell>
-                <CTableDataCell>{row.aggregate}</CTableDataCell>
-                <CTableDataCell>{row.head}</CTableDataCell>
-                <CTableDataCell>{row.category}</CTableDataCell>
-                <CTableDataCell>{row.zone}</CTableDataCell>
-              </CTableRow>
-            ))}
-          </CTableBody>
-        </CTable>
-      </div>
-    </div>
+    </>
   );
 };
 

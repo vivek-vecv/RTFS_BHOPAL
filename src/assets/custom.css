@@ -1,0 +1,12 @@
+.react-datepicker-wrapper {
+    width: 100%;
+    display: block;
+}
+
+.react-datepicker-popper {
+    z-index: 10000;
+}
+
+.modal.show {
+    z-index: 13000;
+}
