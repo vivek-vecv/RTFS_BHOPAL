@@ -7,11 +7,14 @@ import { CButton, CSpinner, CModal, CModalHeader, CModalBody } from '@coreui/rea
 import { FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import BarcodeScanner from './BarcodeScanner.jsx';
+import ConfirmationBox from './ConfirmationBox.jsx';
 import { BsQrCode } from 'react-icons/bs';
 const PDI_DefectEntryScreen = () => {
   const [process, setProcess] = useState('static');
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [defectStatus, setDefectStatus] = useState('NOK');
+
   const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
   const [partOptions, setPartOptions] = useState([]);
@@ -31,7 +34,7 @@ const PDI_DefectEntryScreen = () => {
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
   const [auditDate, setAuditDate] = useState('');
-  const [isScannerVisible, setScannerVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const emptyModel = () => {
     setTotalDefects(0);
@@ -109,15 +112,12 @@ const PDI_DefectEntryScreen = () => {
 
   const fetchPartsData = async (series, processName) => {
     try {
-      const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoProcess?Model=${series}&Process_Name=${processName}`,
-        {
-          auth: {
-            username: 'arun',
-            password: '123456',
-          },
-        }
-      );
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoModel?Model_Name=${series}`, {
+        auth: {
+          username: 'arun',
+          password: '123456',
+        },
+      });
 
       if (response.status === 200) {
         const partsList = response.data['Parts Data_List'] || [];
@@ -304,32 +304,40 @@ const PDI_DefectEntryScreen = () => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    if (tableEntries.length === 0) {
-      toast.error('No entries in table.'); // Set error if date is blank
-      return;
-    }
+    if (chassisNumber) {
+      if (tableEntries.length === 0) {
+        setDefectStatus('All Ok');
+        setConfirmationVisible(true);
+        return;
+      }
 
+      await proceedWithSubmission();
+    }
+    toast.error('Please enter chassis to submit.');
+  };
+
+  const proceedWithSubmission = async () => {
     if (!auditDate) {
-      toast.error('Please select an inspection date and time.');
+      toast.error('Please select inspection date and time.');
       return; // Exit the function if auditDate is empty
     }
 
     try {
       let status;
-      for (const entry of tableEntries) {
+      if (tableEntries.length === 0) {
         const dataList = {
           Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
           Model: serialInfo.Model, // Adjust as necessary
-          Category: entry.CATEGORY,
-          Part_Name: entry.PART,
-          Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
-          Defect_Desc: entry.DEFECT_DESC,
-          Station: 'PAG', // Adjust as necessary
-          Demerit: entry.DEMERIT,
-          Tself: entry.TSELF,
-          Head: entry.HEAD,
-          Aggregate: entry.AGGREGATE,
-          Status: 'NOK', // Adjust as necessary
+          Category: '',
+          Part_Name: '',
+          Defect_Code: '',
+          Defect_Desc: '',
+          Station: 'PDI', // Adjust as necessary
+          Demerit: '',
+          Tself: '',
+          Head: '',
+          Aggregate: '',
+          Status: defectStatus, // Adjust as necessary
           Audit_Date: auditDate, // Use the entered audit date
         };
 
@@ -350,6 +358,43 @@ const PDI_DefectEntryScreen = () => {
           status = 200;
           setError('');
         }
+      } else {
+        setDefectStatus('Not OK');
+        for (const entry of tableEntries) {
+          const dataList = {
+            Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
+            Model: serialInfo.Model, // Adjust as necessary
+            Category: entry.CATEGORY,
+            Part_Name: entry.PART,
+            Defect_Code: entry.DEFECT_CODE,
+            Defect_Desc: entry.DEFECT_DESC,
+            Station: 'PDI', // Adjust as necessary
+            Demerit: entry.DEMERIT,
+            Tself: entry.TSELF,
+            Head: entry.HEAD,
+            Aggregate: entry.AGGREGATE,
+            Status: defectStatus, // Adjust as necessary
+            Audit_Date: auditDate, // Use the entered audit date
+          };
+
+          const serialNumber = chassisNumber; // Adjust as necessary
+          setChassisNumber(chassisNumber);
+          const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+            JSON.stringify(dataList)
+          )}&Serial_Number=${serialNumber}`;
+
+          const response = await axios.post(apiUrl, {
+            auth: {
+              username: 'arun',
+              password: '123456',
+            },
+          });
+
+          if (response.status === 200) {
+            status = 200;
+            setError('');
+          }
+        }
       }
       status === 200 ? toast.success(`Data submitted successfully for ${chassisNumber}`) : toast.error('Error submitting data');
       emptyModel();
@@ -358,6 +403,8 @@ const PDI_DefectEntryScreen = () => {
       setError('Failed to submit data. Please try again.');
     }
   };
+
+  //==========
 
   const reactSelectPopupStyles = {
     menu: (provided) => ({
@@ -374,6 +421,16 @@ const PDI_DefectEntryScreen = () => {
   };
   const handleQrClick = () => {
     setModalVisible(true);
+  };
+
+  const handleConfirm = async () => {
+    setConfirmationVisible(false); // Close the confirmation modal
+    await proceedWithSubmission(); // Proceed with submission even if the table is empty
+  };
+
+  // Handle user cancel
+  const handleCancel = () => {
+    setConfirmationVisible(false); // Close the confirmation modal without submitting
   };
 
   return (
@@ -513,8 +570,16 @@ const PDI_DefectEntryScreen = () => {
             </div>
           </div>
         </div>
-
         <hr />
+
+        <ConfirmationBox
+          title="Confirm"
+          visible={confirmationVisible}
+          message={`Are you sure to submit All OK?`}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
+
         {/* 2nd Div: Dropdowns and Add button */}
         <div className="container-fluid">
           <div className="row align-items-center">
@@ -560,7 +625,6 @@ const PDI_DefectEntryScreen = () => {
             </div>
           </div>
         </div>
-
         {/* Table Section */}
         {tableEntries.length > 0 && (
           // <div className=" my-4 table-section" style={{ maxHeight: '400px', overflowY: 'auto', position: 'relative' }}>

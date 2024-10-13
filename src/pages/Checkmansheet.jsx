@@ -478,7 +478,7 @@ const Checkmansheet = () => {
           <div className="col-12 row">
             <div className="col-12 col-sm-6">
               <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
-                Audit Date
+                Inspection Date
               </label>
               <div>
                 <DatePicker
@@ -498,7 +498,7 @@ const Checkmansheet = () => {
             </div>
             <div className="col-12 col-sm-6">
               <label htmlFor="inspectorName" className="form-label fw-bold m-0">
-                Auditor Name
+                Checkman Name
               </label>
               <Select
                 options={auditorOptions}
