@@ -3,12 +3,13 @@ import axios from 'axios';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { CButton, CSpinner, CModal, CModalHeader, CModalBody } from '@coreui/react';
+import { CButton, CSpinner, CModal, CModalHeader, CModalBody, CFormCheck, CFormSelect, CFormInput } from '@coreui/react';
 import { FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
 import { useNavbar } from '../context/NavbarContext.jsx';
+import { RadioGroup, Radio } from 'react-radio-group';
 const Checkmansheet = () => {
   // const [selectedComponent, setSelectedComponent] = useState(null);
   const [param, setParam] = useState({});
@@ -75,7 +76,6 @@ const Checkmansheet = () => {
 };
 
 export const QGComponent = ({ param }) => {
-  console.log('------------------param-------------------\n', param);
   const { setNavbarData } = useNavbar();
   setNavbarData(param);
 
@@ -86,7 +86,6 @@ export const QGComponent = ({ param }) => {
   const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
   const [partOptions, setPartOptions] = useState([]);
-  const [defectOptions, setDefectOptions] = useState([]);
   const [error, setError] = useState('');
   const [tableEntries, setTableEntries] = useState([]);
   const [serialInfo, setSerialInfo] = useState({
@@ -96,12 +95,15 @@ export const QGComponent = ({ param }) => {
     Rollout_Date: '',
     Serial_Number: '',
   });
-  const [selectedDefects, setSelectedDefects] = useState([]);
+  const [checkPointData, setCheckPointData] = useState([]);
   const [selectedPart, setSelectedPart] = useState(null);
   const [selectedAuditor, setSelectedAuditor] = useState(null);
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
   const [auditDate, setAuditDate] = useState('');
+  const [defectStatuses, setDefectStatuses] = useState({});
+  const [defectOptions, setDefectOptions] = useState({});
+  const [selectedDefects, setSelectedDefects] = useState({});
 
   const emptyModel = () => {
     setTotalDefects(0);
@@ -151,7 +153,17 @@ export const QGComponent = ({ param }) => {
           Order_Number: serialInformation.Order_Number,
           Model_Desc: serialInformation.Model_Desc,
           Halb_Code: serialInformation.Halb_Code,
+          Fert_Code: serialInformation.Fert_Code,
         });
+
+        const checkPointData = response.data.Checkpoint_table_Details;
+        setCheckPointData(checkPointData);
+
+        const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
+          acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
+          return acc;
+        }, {});
+        setDefectStatuses(initialStatuses);
 
         await fetchPartsData(serialInformation.Serial_Number, serialInformation.Station, serialInformation.Line);
         return serialInformation.Serial_Number;
@@ -164,7 +176,7 @@ export const QGComponent = ({ param }) => {
   const fetchChassisNumber = async (value) => {
     setDataFetchLoading(true);
     try {
-      if (value.length == 6 || value.length == 17) {
+      if (value.length == 6 || value.length == 17 || value.length == 10) {
         const chassis = await fetchSerialNumberDetails(value);
         if (chassis) {
           setChassisNumber(chassis);
@@ -185,29 +197,28 @@ export const QGComponent = ({ param }) => {
   };
 
   const fetchPartsData = async (serialNumber, Station, Line) => {
-    try {
-      const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getCheckpointList?Serial_Number=${serialNumber}&Line_Name=${Line}&Station_Name=${Station}`,
-        {
-          auth: {
-            username: 'arun',
-            password: '123456',
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const partsList = response.data['Parts Data_List'] || [];
-        setPartOptions(
-          partsList.map((part) => ({
-            value: part.Part_Name,
-            label: part.Part_Name,
-          }))
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching parts data:', error);
-    }
+    // try {
+    //   const response = await axios.get(
+    //     `http://10.119.1.101:9898/rest/api/getCheckpointList?Serial_Number=${serialNumber}&Line_Name=${Line}&Station_Name=${Station}`,
+    //     {
+    //       auth: {
+    //         username: 'arun',
+    //         password: '123456',
+    //       },
+    //     }
+    //   );
+    //   if (response.status === 200) {
+    //     const partsList = response.data['Parts Data_List'] || [];
+    //     setPartOptions(
+    //       partsList.map((part) => ({
+    //         value: part.Part_Name,
+    //         label: part.Part_Name,
+    //       }))
+    //     );
+    //   }
+    // } catch (error) {
+    //   console.error('Error fetching parts data:', error);
+    // }
   };
 
   const handlePartChange = async (selectedOption) => {
@@ -248,7 +259,7 @@ export const QGComponent = ({ param }) => {
 
   const fetchAuditors = async () => {
     try {
-      const response = await axios.get('http://10.119.1.101:9898/rest/api/getAllAuditors/', {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -256,11 +267,11 @@ export const QGComponent = ({ param }) => {
       });
 
       if (response.status === 200) {
-        const auditorsList = response.data.Auditors_list || [];
+        const auditorsList = response.data.Operator_Information || [];
         setAuditorOptions(
           auditorsList.map((auditor) => ({
-            value: auditor.Auditor,
-            label: auditor.Auditor,
+            value: auditor.Operator_Name,
+            label: auditor.Operator_Name,
           }))
         );
       }
@@ -453,6 +464,55 @@ export const QGComponent = ({ param }) => {
     setModalVisible(true);
   };
 
+  const handleStatusChange = async (defectId, value, checkpoint) => {
+    setDefectStatuses((prev) => ({
+      ...prev,
+      [defectId]: value,
+    }));
+
+    // Fetch defects only if "NOK" is selected
+    if (value === 'nok') {
+      try {
+        const response = await axios.get(
+          `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Name=${checkpoint}`
+        );
+
+        // Group defects based on Checkpoint_Id
+        const defectsForCheckpoint = response.data['Checkpoint Defect_List'].reduce((acc, defect) => {
+          const checkpointId = defect.Checkpoint_Id;
+
+          // Initialize an empty array if checkpointId is not already in acc
+          if (!acc[checkpointId]) {
+            acc[checkpointId] = [];
+          }
+
+          // Add defect to the corresponding checkpointId array
+          acc[checkpointId].push({
+            value: defect.Defect_Name,
+            label: defect.Defect_Name,
+          });
+
+          return acc;
+        }, {});
+        console.log('------------------defectsForCheckpoint-------------------\n', defectsForCheckpoint);
+
+        // Merge new defects with the existing state
+        setDefectOptions((prev) => ({
+          ...prev,
+          ...defectsForCheckpoint,
+        }));
+      } catch (error) {
+        console.error('Error fetching defects:', error);
+      }
+    }
+  };
+
+  const handleSelectedDefects = (checkpointId, selectedOption) => {
+    setSelectedDefects((prev) => ({
+      ...prev,
+      [checkpointId]: selectedOption,
+    }));
+  };
   return (
     <>
       {dataFetchLoading ? (
@@ -467,7 +527,7 @@ export const QGComponent = ({ param }) => {
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">
           <div className="col-12 row">
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-6 col-lg-4">
               <label htmlFor="chassisNumber" className="form-label fw-bold m-0">
                 Chassis Number
               </label>
@@ -495,14 +555,14 @@ export const QGComponent = ({ param }) => {
                 </CModalBody>
               </CModal>
             </div>
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-3 col-lg-4">
               <label htmlFor="engineNumber" className="form-label fw-bold m-0">
-                Line
+                Fert Code
               </label>
-              <input type="text" id="engineNumber" className="form-control disabled-input" value={serialInfo.Line} disabled={true} />
+              <input type="text" id="engineNumber" className="form-control disabled-input" value={serialInfo.Fert_Code} disabled={true} />
             </div>
 
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-3 col-lg-4">
               <label htmlFor="series" className="form-label fw-bold m-0">
                 Order No.
               </label>
@@ -510,19 +570,19 @@ export const QGComponent = ({ param }) => {
             </div>
           </div>
           <div className="col-12 row">
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-2 col-lg-3">
               <label htmlFor="series" className="form-label fw-bold m-0">
                 Station
               </label>
               <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Station} disabled={true} />
             </div>
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-4 col-lg-3">
               <label htmlFor="model" className="form-label fw-bold m-0">
                 Model
               </label>
               <input type="text" id="model" className="form-control disabled-input" value={serialInfo.Model} disabled={true} />
             </div>
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-6 col-lg-6">
               <label htmlFor="series" className="form-label fw-bold m-0">
                 Model Desc
               </label>
@@ -530,33 +590,33 @@ export const QGComponent = ({ param }) => {
             </div>
           </div>
           <div className="col-12 row">
-            <div className="col-12 col-sm-4">
+            <div className="col-12 col-sm-3">
               <label htmlFor="rolloutDate" className="form-label fw-bold m-0">
                 Halb Code
               </label>
               <input type="text" id="rolloutDate" className="form-control disabled-input" value={serialInfo.Halb_Code} disabled={true} />
             </div>
-            <div className="col-12 col-sm-4">
+            <div className="col-12 col-sm-3">
               <label htmlFor="rolloutShift" className="form-label fw-bold m-0">
                 Shift
               </label>
               <input type="text" value={serialInfo.Shift} id="rolloutShift" className="form-control disabled-input" disabled={true} />
             </div>
-            <div className="col-12 col-sm-2">
+            <div className="col-12 col-sm-3">
               <label htmlFor="totalDefectCount" className="form-label fw-bold m-0">
                 Total Defects
               </label>
               <input type="text" id="totalDefectCount" className="form-control disabled-input" value={totalDefects} disabled={true} />
             </div>
-            <div className="col-12 col-sm-2">
+            <div className="col-12 col-sm-3">
               <label htmlFor="totalDemerit" className="form-label fw-bold m-0">
                 Total Demerit
               </label>
               <input type="text" id="totalDemerit" className="form-control disabled-input" value={totalDemerits} disabled={true} />
             </div>
           </div>
-          <div className="col-12 row">
-            <div className="col-12 col-sm-6">
+          <div className="col-12 col-md-8 row">
+            <div className="col-12 col-sm-6 col-md-4">
               <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
                 Inspection Date
               </label>
@@ -576,7 +636,7 @@ export const QGComponent = ({ param }) => {
                 />
               </div>
             </div>
-            <div className="col-12 col-sm-6">
+            <div className="col-12 col-sm-6 col-md-4">
               <label htmlFor="inspectorName" className="form-label fw-bold m-0">
                 Checkman Name
               </label>
@@ -590,124 +650,95 @@ export const QGComponent = ({ param }) => {
               />
             </div>
           </div>
-        </div>
-
-        <hr />
-        {/* 2nd Div: Dropdowns and Add button */}
-        <div className="container-fluid">
-          <div className="row align-items-center">
-            <div className="col-md-8 d-flex flex-row row">
-              <div className="col-4" style={{ zIndex: 1100 }}>
-                <label htmlFor="selectPart" className="form-label fw-bold m-0">
-                  Select Part
-                </label>
-                <Select
-                  options={partOptions}
-                  placeholder="Select a part"
-                  isClearable
-                  onChange={handlePartChange}
-                  value={selectedPart ? { value: selectedPart.value, label: selectedPart.label } : null}
-                />
-              </div>
-              <div className="col-8" style={{ zIndex: 1100 }}>
-                <label htmlFor="selectDefects" className="form-label fw-bold m-0">
-                  Select Defects
-                </label>
-                <Select
-                  options={defectOptions}
-                  placeholder="Select defects"
-                  isClearable
-                  isMulti
-                  value={selectedDefects} // Bind the selected defects to the component
-                  onChange={handleDefectChange} // Set the onChange prop
-                />
-              </div>
-            </div>
-            <div className="col-md-4">
-              <div className="d-flex justify-content-end gap-2  flex-wrap">
-                <CButton className="btn btn-primary fw-bold" onClick={handleAdd} disabled={loading}>
-                  {loading ? <CSpinner size="sm" /> : '+ Add'}
-                </CButton>
-                <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
-                  Reset
-                </CButton>
-                <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
-                  Submit
-                </CButton>
-              </div>
+          <div className="col-12 col-md-4">
+            <div className="d-flex justify-content-end align-items-end gap-2  mt-4 flex-wrap">
+              <CButton className="btn btn-primary fw-bold" onClick={handleAdd} disabled={loading}>
+                {loading ? <CSpinner size="sm" /> : '+ Add'}
+              </CButton>
+              <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
+                Reset
+              </CButton>
+              <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
+                Submit
+              </CButton>
             </div>
           </div>
         </div>
 
-        {/* Table Section */}
-        {tableEntries.length > 0 && (
-          // <div className=" my-4 table-section" style={{ maxHeight: '400px', overflowY: 'auto', position: 'relative' }}>
+        <hr />
+        {/* 2nd Div: Dropdowns and Add button */}
+        {/* //==================================================================================== */}
+
+        <div className="container-fluid">
           <div className="d-flex flex-column my-3 " style={{ height: '100vh' }}>
             <div className="flex-grow-1" style={{ overflowY: 'auto' }}>
               <table
-                className="table table-striped table-hover table-bordered"
+                className="table table-hover table-striped border border-start border-end text-center"
                 style={{
-                  // minHeight: '200px',
                   minWidth: '800px', // Set the minimum height
-                  // maxHeight: 'none', // No maximum height limit
-                  // overflowY: 'auto', // Enable vertical scrolling
-                  // overflowX: 'auto', // Enable horizontal scrolling
                 }}
               >
                 <thead className="position-sticky top-0" style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8f9fa' }}>
                   <tr>
-                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '7rem' }}>
-                      PART NAME
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ minWidth: '20rem' }}>
-                      DEFECT DESC
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '6rem' }}>
-                      DEMERIT
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
-                      TSELF
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col">
-                      HEAD
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col">
-                      CATEGORY
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col">
-                      ZONE
-                    </th>
-                    <th className="bg-dark text-light text-center align-middle" scope="col" style={{ width: '5rem' }}>
-                      Delete
-                    </th>
+                    <th className="bg-primary text-white">CHECK POINT</th>
+                    <th className="bg-primary text-white">ACTION TAKEN</th>
+                    <th className="bg-primary text-white">ADDITIONAL DEFECT</th>
+                    <th className="bg-primary text-white">INSP. METHOD</th>
+                    <th className="bg-primary text-white">REMARKS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {tableEntries.map((row, index) => (
-                    <tr key={index}>
-                      <td className="text-center align-middle">{row.PART}</td>
-                      <td className="text-center align-middle">{row.DEFECT_DESC}</td>
-                      <td className="text-center align-middle">{row.DEMERIT}</td>
-                      <td className="text-center align-middle">{row.TSELF}</td>
-                      <td className="text-center align-middle">{row.HEAD}</td>
-                      <td className="text-center align-middle">{row.CATEGORY}</td>
-                      <td className="text-center align-middle">{row.ZONE}</td>
-                      <td className="text-center align-middle">
-                        <FaTrash
-                          style={{ cursor: 'pointer' }}
-                          size={25}
-                          color="red"
-                          onClick={() => handleDelete(index, row.DEFECT_DESC, row.DEMERIT)}
+                  {checkPointData.map((checkpoint) => (
+                    <tr key={checkpoint.Checkpoint_Id}>
+                      <td className="align-middle">{checkpoint.Checkpoint_Name}</td>
+                      <td className="align-middle">
+                        <div className="d-flex flex-column">
+                          <div className="form-check cursor-pointer">
+                            <CFormCheck
+                              type="radio"
+                              id={`radio-ok-${checkpoint.Checkpoint_Id}`} // Unique ID for the radio button
+                              name={`checkpoint-${checkpoint.Checkpoint_Id}`} // Ensure the name matches for grouping
+                              value="ok"
+                              checked={defectStatuses[checkpoint.Checkpoint_Id] === 'ok'}
+                              onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'ok', checkpoint.Checkpoint_Name)}
+                              label={<span className="text-success fw-bold">OK</span>}
+                            />
+                          </div>
+                          <div className="form-check cursor-pointer">
+                            <CFormCheck
+                              type="radio"
+                              id={`radio-nok-${checkpoint.Checkpoint_Id}`} // Unique ID for the radio button
+                              name={`checkpoint-${checkpoint.Checkpoint_Id}`}
+                              value="nok"
+                              checked={defectStatuses[checkpoint.Checkpoint_Id] === 'nok'}
+                              onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'nok', checkpoint.Checkpoint_Name)}
+                              label={<span className="text-danger fw-bold">Not OK</span>}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="align-middle">
+                        <Select
+                          options={defectOptions[checkpoint.Checkpoint_Id] || []} // Use defects for this specific checkpoint
+                          placeholder="Select Defects"
+                          isClearable
+                          isDisabled={defectStatuses[checkpoint.Checkpoint_Id] !== 'nok'} // Disable when status is not "NOK"
+                          styles={reactSelectPopupStyles}
+                          onChange={(selectedOption) => handleSelectedDefects(checkpoint.Checkpoint_Id, selectedOption)}
+                          value={selectedDefects[checkpoint.Checkpoint_Id] || null} // Select the option based on the selected state
                         />
+                      </td>
+                      <td className="align-middle">{checkpoint.Inspection_Method}</td>
+                      <td className="align-middle">
+                        <CFormInput type="text" placeholder="Add Remarks" />
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {/* </div> */}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </>
   );

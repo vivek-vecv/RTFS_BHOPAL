@@ -644,11 +644,7 @@ const AuditEntry = () => {
               <table
                 className="table table-striped table-hover table-bordered"
                 style={{
-                  // minHeight: '200px',
                   minWidth: '800px', // Set the minimum height
-                  // maxHeight: 'none', // No maximum height limit
-                  // overflowY: 'auto', // Enable vertical scrolling
-                  // overflowX: 'auto', // Enable horizontal scrolling
                 }}
               >
                 <thead className="position-sticky top-0" style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8f9fa' }}>

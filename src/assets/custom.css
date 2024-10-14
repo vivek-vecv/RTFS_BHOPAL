@@ -16,6 +16,10 @@
 
 }
 
+.cursor-pointer {
+    cursor: pointer !important;
+}
+
 
 .half-height-box {
     display: flex;
