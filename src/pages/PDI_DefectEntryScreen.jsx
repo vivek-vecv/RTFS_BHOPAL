@@ -14,7 +14,7 @@ const PDI_DefectEntryScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [defectStatus, setDefectStatus] = useState('NOK');
-
+  const [dataFetchLoading, setDataFetchLoading] = useState(false);
   const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
   const [partOptions, setPartOptions] = useState([]);
@@ -91,6 +91,7 @@ const PDI_DefectEntryScreen = () => {
   };
 
   const fetchChassisNumber = async (value) => {
+    setDataFetchLoading(true);
     try {
       if (value.length == 6 || value.length == 17) {
         const chassis = await fetchSerialNumberDetails(value);
@@ -99,7 +100,9 @@ const PDI_DefectEntryScreen = () => {
           fetchAuditors();
         }
       }
+      setDataFetchLoading(false);
     } catch (error) {
+      setDataFetchLoading(false);
       console.error('Error fetching serial details :', error);
     }
   };
@@ -409,7 +412,7 @@ const PDI_DefectEntryScreen = () => {
   const reactSelectPopupStyles = {
     menu: (provided) => ({
       ...provided,
-      zIndex: 10000, // Adjust this value as needed
+      zIndex: 10000,
     }),
   };
 
@@ -435,6 +438,14 @@ const PDI_DefectEntryScreen = () => {
 
   return (
     <>
+      {dataFetchLoading ? (
+        <div
+          className="position-fixed top-0 d-flex justify-content-center align-items-center vw-100 vh-100 bg-white bg-opacity-75"
+          style={{ zIndex: 15000 }}
+        >
+          <CSpinner className="text-danger mx-auto" />
+        </div>
+      ) : null}
       <div className="container-fluid pt-3">
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">

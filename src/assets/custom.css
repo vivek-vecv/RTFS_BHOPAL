@@ -10,3 +10,22 @@
 .modal.show {
     z-index: 13000;
 }
+
+.modal-backdrop.show {
+    z-index: 13000;
+
+}
+
+
+.half-height-box {
+    display: flex;
+    width: 80%;
+    /* Width of the half-height box */
+    max-width: 800px;
+    /* Optional max-width */
+    /* height: 50% */
+    /* Half of the viewport height */
+    background-color: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    /* Optional border radius */
+}

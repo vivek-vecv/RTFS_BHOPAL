@@ -3,6 +3,7 @@ import axios from 'axios';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import ConfirmationBox from './ConfirmationBox.jsx';
 import { CButton, CSpinner, CModal, CModalHeader, CModalBody } from '@coreui/react';
 import { FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
@@ -11,6 +12,8 @@ import BarcodeScanner from './BarcodeScanner.jsx';
 const AuditEntry = () => {
   const [process, setProcess] = useState('static');
   const [loading, setLoading] = useState(false);
+  const [defectStatus, setDefectStatus] = useState('NOK');
+  const [dataFetchLoading, setDataFetchLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
@@ -31,6 +34,7 @@ const AuditEntry = () => {
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
   const [auditDate, setAuditDate] = useState('');
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const emptyModel = () => {
     setTotalDefects(0);
@@ -87,6 +91,7 @@ const AuditEntry = () => {
   };
 
   const fetchChassisNumber = async (value) => {
+    setDataFetchLoading(true);
     try {
       if (value.length == 6 || value.length == 17) {
         const chassis = await fetchSerialNumberDetails(value);
@@ -95,7 +100,9 @@ const AuditEntry = () => {
           fetchAuditors();
         }
       }
+      setDataFetchLoading(false);
     } catch (error) {
+      setDataFetchLoading(false);
       console.error('Error fetching serial details :', error);
     }
   };
@@ -303,33 +310,41 @@ const AuditEntry = () => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    if (tableEntries.length === 0) {
-      toast.error('No entries in table.'); // Set error if date is blank
-      return;
-    }
+    if (chassisNumber) {
+      if (tableEntries.length === 0) {
+        setDefectStatus('All Ok');
+        setConfirmationVisible(true);
+        return;
+      }
 
+      await proceedWithSubmission();
+    }
+    toast.error('Please enter chassis to submit.');
+  };
+
+  const proceedWithSubmission = async () => {
     if (!auditDate) {
-      toast.error('Please select an audit date and time.');
+      toast.error('Please select inspection date and time.');
       return; // Exit the function if auditDate is empty
     }
 
     try {
       let status;
-      for (const entry of tableEntries) {
+      if (tableEntries.length === 0) {
         const dataList = {
           Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
           Model: serialInfo.Model, // Adjust as necessary
-          Category: entry.CATEGORY,
-          Part_Name: entry.PART,
-          Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
-          Defect_Desc: entry.DEFECT_DESC,
-          Station: 'PAG', // Adjust as necessary
-          Demerit: entry.DEMERIT,
-          Tself: entry.TSELF,
-          Head: entry.HEAD,
-          Aggregate: entry.AGGREGATE,
-          Status: 'NOK', // Adjust as necessary
-          Audit_Date: auditDate, // Use the entered audit date
+          Category: '',
+          Part_Name: '',
+          Defect_Code: '',
+          Defect_Desc: '',
+          Station: 'PAG',
+          Demerit: '',
+          Tself: '',
+          Head: '',
+          Aggregate: '',
+          Status: defectStatus,
+          Audit_Date: auditDate,
         };
 
         const serialNumber = chassisNumber; // Adjust as necessary
@@ -348,6 +363,43 @@ const AuditEntry = () => {
         if (response.status === 200) {
           status = 200;
           setError('');
+        }
+      } else {
+        setDefectStatus('Not OK');
+        for (const entry of tableEntries) {
+          const dataList = {
+            Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
+            Model: serialInfo.Model, // Adjust as necessary
+            Category: entry.CATEGORY,
+            Part_Name: entry.PART,
+            Defect_Code: entry.DEFECT_CODE,
+            Defect_Desc: entry.DEFECT_DESC,
+            Station: 'PDI', // Adjust as necessary
+            Demerit: entry.DEMERIT,
+            Tself: entry.TSELF,
+            Head: entry.HEAD,
+            Aggregate: entry.AGGREGATE,
+            Status: defectStatus, // Adjust as necessary
+            Audit_Date: auditDate, // Use the entered audit date
+          };
+
+          const serialNumber = chassisNumber; // Adjust as necessary
+          setChassisNumber(chassisNumber);
+          const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+            JSON.stringify(dataList)
+          )}&Serial_Number=${serialNumber}`;
+
+          const response = await axios.post(apiUrl, {
+            auth: {
+              username: 'arun',
+              password: '123456',
+            },
+          });
+
+          if (response.status === 200) {
+            status = 200;
+            setError('');
+          }
         }
       }
       status === 200 ? toast.success(`Data submitted successfully for ${chassisNumber}`) : toast.error('Error submitting data');
@@ -374,9 +426,26 @@ const AuditEntry = () => {
   const handleQrClick = () => {
     setModalVisible(true);
   };
+  const handleConfirm = async () => {
+    setConfirmationVisible(false); // Close the confirmation modal
+    await proceedWithSubmission(); // Proceed with submission even if the table is empty
+  };
+
+  // Handle user cancel
+  const handleCancel = () => {
+    setConfirmationVisible(false); // Close the confirmation modal without submitting
+  };
 
   return (
     <>
+      {dataFetchLoading ? (
+        <div
+          className="position-fixed top-0 d-flex justify-content-center align-items-center vw-100 vh-100 bg-white bg-opacity-75"
+          style={{ zIndex: 15000 }}
+        >
+          <CSpinner className="text-danger mx-auto" />
+        </div>
+      ) : null}
       <div className="container-fluid pt-3">
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">
@@ -513,23 +582,31 @@ const AuditEntry = () => {
         </div>
 
         <hr />
+        <ConfirmationBox
+          title="Confirm"
+          visible={confirmationVisible}
+          message={`Are you sure to submit All OK?`}
+          onConfirm={handleConfirm}
+          onCancel={handleCancel}
+        />
         {/* 2nd Div: Dropdowns and Add button */}
         <div className="container-fluid">
-          <div className="row align-items-center">
+          <div className="row align-items-center gap-3">
             <div className="col-md-8 d-flex flex-row row">
-              <div className="col-4" style={{ zIndex: 1100 }}>
+              <div className="col-12 col-sm-4">
                 <label htmlFor="selectPart" className="form-label fw-bold m-0">
                   Select Part
                 </label>
                 <Select
                   options={partOptions}
-                  placeholder="Select a part"
+                  placeholder="Select part"
                   isClearable
+                  styles={reactSelectPopupStyles}
                   onChange={handlePartChange}
                   value={selectedPart ? { value: selectedPart.value, label: selectedPart.label } : null}
                 />
               </div>
-              <div className="col-8" style={{ zIndex: 1100 }}>
+              <div className="col-12 col-sm-8" style={{ zIndex: 1100 }}>
                 <label htmlFor="selectDefects" className="form-label fw-bold m-0">
                   Select Defects
                 </label>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext.jsx';
+// import { useAuth } from './AuthContext.jsx';
 import { credentials } from './credentials.jsx';
+import vehicleImage from '../images/transparent.png';
 import { CContainer, CRow, CCol, CForm, CFormLabel, CFormInput, CImage, CButton, CAlert } from '@coreui/react';
 import Navbar from './navbar.jsx';
 import { login_api, headers, etbApi, testAPi, API_URL } from '../apis/apipath.jsx';
@@ -15,7 +16,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const [currentTime, setCurrentTime] = useState('');
   const [shift, setShift] = useState('');
-  const { login, heading } = useAuth();
+  // const { login, heading } = useAuth();
   useEffect(() => {
     const interval = setInterval(() => {
       const now = new Date();
@@ -42,7 +43,7 @@ const LoginPage = () => {
 
     if (user) {
       console.log(user);
-      login(user);
+      // login(user);
       // Optionally, redirect to a default route or the user's component
       window.location.hash = `/${username.toLowerCase()}`; // Redirect based on username
     } else {
@@ -51,64 +52,59 @@ const LoginPage = () => {
   };
 
   return (
-    <>
-      <Navbar shift={shift} currentTime={currentTime} heading={heading} />
-      <CContainer fluid className="d-flex justify-content-center align-items-center">
-        <CRow className=" d-flex justify-content-center align-items-center bg-gradient rounded-2">
-          <CCol xs={12} md={6} className="d-flex justify-content-center">
-            <CImage
-              fluid
-              src="/src/images/transparent.png"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-              }}
-            />
-          </CCol>
+    <div className="container-fluid">
+      <div
+        className="half-height-box shadow-lg mx-auto rounded rounded-5 border-info border"
+        style={{
+          marginTop: '80px',
+          background: `url(${vehicleImage})`,
+          backgroundSize: 'contain', // Ensures the image covers the div
+          backgroundPosition: 'left',
+          backgroundRepeat: 'no-repeat', // Prevents repeating the image
+          // height: '50vh', // Adjust height as needed
+        }}
+      >
+        <div className="ms-auto p-4 login-box rounded-end-5  bg-secondary bg-opacity-25 ">
+          <h3 className="text-center fw-bold">Login</h3>
+          <CForm onSubmit={handleLogin} className="p-4 gap-4 d-flex flex-column my-auto">
+            <div className="form-group">
+              <CFormLabel htmlFor="username" className="fw-bold m-0">
+                Username
+              </CFormLabel>
+              <CFormInput
+                type="text"
+                id="username"
+                placeholder="Enter username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="input-field"
+              />
+            </div>
 
-          <CCol xs={12} md={6} className="border border-2 shadow bg-light rounded p-4 w-auto">
-            <h2 style={{ textAlign: 'center' }}>Login</h2>
+            <div className="form-group">
+              <CFormLabel htmlFor="password" className="fw-bold m-0">
+                Password
+              </CFormLabel>
+              <CFormInput
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="input-field"
+              />
+            </div>
 
-            {error && <CAlert color="danger">{error}</CAlert>}
-
-            <CForm onSubmit={handleLogin} className="p-4 gap-4 d-flex flex-column">
-              <div className="form-group">
-                <CFormLabel htmlFor="username">Username</CFormLabel>
-                <CFormInput
-                  type="text"
-                  id="username"
-                  placeholder="Enter username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  className="input-field"
-                />
-              </div>
-
-              <div className="form-group">
-                <CFormLabel htmlFor="password">Password</CFormLabel>
-                <CFormInput
-                  type="password"
-                  id="password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="input-field"
-                />
-              </div>
-
-              <CButton type="submit" className="btn btn-primary w-100">
-                Login
-              </CButton>
-
-              {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-            </CForm>
-          </CCol>
-        </CRow>
-      </CContainer>
-    </>
+            <CButton type="submit" className="btn btn-primary w-100">
+              Login
+            </CButton>
+          </CForm>
+          {error && <CAlert color="danger">{error}</CAlert>}
+        </div>
+      </div>
+    </div>
   );
 };
 

@@ -11,6 +11,7 @@ import { toast } from 'react-toastify';
 import MainDashboard from './pages/MainDashboard.jsx';
 import Navbar from './pages/navbar.jsx';
 import './assets/custom.css';
+import { NavbarProvider } from './context/NavbarContext.jsx';
 
 const App = () => {
   return (
@@ -19,36 +20,38 @@ const App = () => {
       <Toaster />
 
       <Router>
-        <Navbar />
-        <Routes>
-          <Route path="/" element={<MainDashboard />} />
-          <Route path="/login" element={<LoginComponent />} />
-          <Route
-            path="/pdi"
-            element={
-              // <ProtectedRoute>
-              <PDIComponent />
-              // </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pag"
-            element={
-              // <ProtectedRoute>
-              <PAGComponent />
-              // </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/qg"
-            element={
-              // <ProtectedRoute>
-              <QGComponent />
-              // </ProtectedRoute>
-            }
-          />
-          <Route path="/" element={<Navigate to="/login" />} />
-        </Routes>
+        <NavbarProvider>
+          <Navbar />
+          <Routes>
+            <Route path="/" element={<MainDashboard />} />
+            <Route path="/login" element={<LoginComponent />} />
+            <Route
+              path="/pdi"
+              element={
+                // <ProtectedRoute>
+                <PDIComponent />
+                // </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pag"
+              element={
+                // <ProtectedRoute>
+                <PAGComponent />
+                // </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/qg"
+              element={
+                // <ProtectedRoute>
+                <QGComponent />
+                // </ProtectedRoute>
+              }
+            />
+            <Route path="/" element={<Navigate to="/login" />} />
+          </Routes>
+        </NavbarProvider>
       </Router>
     </>
     // </AuthProvider>

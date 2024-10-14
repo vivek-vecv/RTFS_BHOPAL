@@ -8,8 +8,79 @@ import { FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
+import { useNavbar } from '../context/NavbarContext.jsx';
 const Checkmansheet = () => {
+  // const [selectedComponent, setSelectedComponent] = useState(null);
+  const [param, setParam] = useState({});
+  const [showButtons, setShowButtons] = useState(true); // State to manage button visibility
+
+  const handleButtonClick = (paramValue) => {
+    setParam(paramValue);
+    setShowButtons(false); // Hide buttons after selection
+  };
+
+  const params = [
+    { line: 'Chassis', station: 'QG01', direction: 'Left' },
+    { line: 'Chassis', station: 'QG01', direction: 'Right' },
+    { line: 'Chassis', station: 'QG02', direction: 'Left' },
+    { line: 'Chassis', station: 'QG02', direction: 'Right' },
+    { line: 'Chassis', station: 'QG03', direction: 'Left' },
+    { line: 'Chassis', station: 'QG03', direction: 'Right' },
+    { line: 'Cabtrim', station: 'QG01' },
+    { line: 'Cabtrim', station: 'QG02' },
+    { line: 'Cabtrim', station: 'QG03' },
+  ];
+
+  // Categorize params based on line
+  const chassisParams = params.filter((item) => item.line === 'Chassis');
+  const cabtrimParams = params.filter((item) => item.line === 'Cabtrim');
+
+  return (
+    <div className="">
+      {showButtons && ( // Render buttons only if showButtons is true
+        <div className="container mt-4">
+          <h3>Select Line and Station</h3>
+          <div className="border border-2 border-info rounded p-3 mb-4 shadow-sm">
+            <h3 className="h5">Chassis</h3>
+            <div className="row">
+              {chassisParams.map((item, index) => (
+                <div key={index} className="col-12 col-sm-6 col-lg-3">
+                  <CButton onClick={() => handleButtonClick(item)} className="btn-primary w-100 mb-3 fw-bold">
+                    {`${item.line} ${item.station} ${item.direction ? item.direction : ''}`}
+                  </CButton>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="border border-2 border-info rounded p-3 mb-4 shadow-sm">
+            <h3 className="h5">Cabtrim</h3>
+            <div className="row">
+              {cabtrimParams.map((item, index) => (
+                <div key={index} className="col-12 col-sm-6 col-lg-3">
+                  <CButton onClick={() => handleButtonClick(item)} className="btn-secondary w-100 mb-3 fw-bold">
+                    {`${item.line} ${item.station}`}
+                  </CButton>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {!showButtons &&
+        param && ( // Render MyComponent if parameters are set
+          <QGComponent param={param} />
+        )}
+    </div>
+  );
+};
+
+export const QGComponent = ({ param }) => {
+  console.log('------------------param-------------------\n', param);
+  const { setNavbarData } = useNavbar();
+  setNavbarData(param);
+
   const [process, setProcess] = useState('static');
+  const [dataFetchLoading, setDataFetchLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [chassisNumber, setChassisNumber] = useState('');
@@ -58,27 +129,31 @@ const Checkmansheet = () => {
   };
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForAudit/?Serial_Number=${serialNumber}`, {
-        auth: {
-          username: 'arun',
-          password: '123456',
-        },
-      });
+      const response = await axios.get(
+        `http://10.119.1.101:9898/rest/api/getQualityGateSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
+      );
 
       if (response.status === 200) {
-        const serialInformation = response.data.Serial_Information[0];
+        const serialInformation = response.data.Header_Details[0];
         setSerialInfo({
-          Series: serialInformation.Series,
-          Engine_Number: serialInformation.Engine_Number,
+          Station: serialInformation.Station,
+          Fuel_Type: serialInformation.Fuel_Type,
           Model: serialInformation.Model,
-          Rollout_Date: serialInformation.Rollout_Date,
+          Line: serialInformation.Line,
           Serial_Number: serialInformation.Serial_Number,
-          Shift_Name: serialInformation.Shift_Name,
+          Shift: serialInformation.Shift,
           Order_Number: serialInformation.Order_Number,
-          Part_Description: serialInformation.Part_Description,
+          Model_Desc: serialInformation.Model_Desc,
+          Halb_Code: serialInformation.Halb_Code,
         });
 
-        await fetchPartsData(serialInformation.Series, process);
+        await fetchPartsData(serialInformation.Serial_Number, serialInformation.Station, serialInformation.Line);
         return serialInformation.Serial_Number;
       }
     } catch (error) {
@@ -87,6 +162,7 @@ const Checkmansheet = () => {
   };
 
   const fetchChassisNumber = async (value) => {
+    setDataFetchLoading(true);
     try {
       if (value.length == 6 || value.length == 17) {
         const chassis = await fetchSerialNumberDetails(value);
@@ -95,7 +171,9 @@ const Checkmansheet = () => {
           fetchAuditors();
         }
       }
+      setDataFetchLoading(false);
     } catch (error) {
+      setDataFetchLoading(false);
       console.error('Error fetching serial details :', error);
     }
   };
@@ -106,10 +184,10 @@ const Checkmansheet = () => {
     fetchChassisNumber(value);
   };
 
-  const fetchPartsData = async (series, processName) => {
+  const fetchPartsData = async (serialNumber, Station, Line) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getPartsForAuditAcctoProcess?Model=${series}&Process_Name=${processName}`,
+        `http://10.119.1.101:9898/rest/api/getCheckpointList?Serial_Number=${serialNumber}&Line_Name=${Line}&Station_Name=${Station}`,
         {
           auth: {
             username: 'arun',
@@ -377,6 +455,14 @@ const Checkmansheet = () => {
 
   return (
     <>
+      {dataFetchLoading ? (
+        <div
+          className="position-fixed top-0 d-flex justify-content-center align-items-center vw-100 vh-100 bg-white bg-opacity-75"
+          style={{ zIndex: 15000 }}
+        >
+          <CSpinner className="text-danger mx-auto" />
+        </div>
+      ) : null}
       <div className="container-fluid pt-3">
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">
@@ -411,15 +497,9 @@ const Checkmansheet = () => {
             </div>
             <div className="col-12 col-sm-6 col-md-4">
               <label htmlFor="engineNumber" className="form-label fw-bold m-0">
-                Engine Number
+                Line
               </label>
-              <input
-                type="text"
-                id="engineNumber"
-                className="form-control disabled-input"
-                value={serialInfo.Engine_Number}
-                disabled={true}
-              />
+              <input type="text" id="engineNumber" className="form-control disabled-input" value={serialInfo.Line} disabled={true} />
             </div>
 
             <div className="col-12 col-sm-6 col-md-4">
@@ -432,9 +512,9 @@ const Checkmansheet = () => {
           <div className="col-12 row">
             <div className="col-12 col-sm-6 col-md-4">
               <label htmlFor="series" className="form-label fw-bold m-0">
-                Series
+                Station
               </label>
-              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Series} disabled={true} />
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Station} disabled={true} />
             </div>
             <div className="col-12 col-sm-6 col-md-4">
               <label htmlFor="model" className="form-label fw-bold m-0">
@@ -446,21 +526,21 @@ const Checkmansheet = () => {
               <label htmlFor="series" className="form-label fw-bold m-0">
                 Model Desc
               </label>
-              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Part_Description} disabled={true} />
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Model_Desc} disabled={true} />
             </div>
           </div>
           <div className="col-12 row">
             <div className="col-12 col-sm-4">
               <label htmlFor="rolloutDate" className="form-label fw-bold m-0">
-                Rollout Date
+                Halb Code
               </label>
-              <input type="text" id="rolloutDate" className="form-control disabled-input" value={serialInfo.Rollout_Date} disabled={true} />
+              <input type="text" id="rolloutDate" className="form-control disabled-input" value={serialInfo.Halb_Code} disabled={true} />
             </div>
             <div className="col-12 col-sm-4">
               <label htmlFor="rolloutShift" className="form-label fw-bold m-0">
-                Rollout Shift
+                Shift
               </label>
-              <input type="text" value={serialInfo.Shift_Name} id="rolloutShift" className="form-control disabled-input" disabled={true} />
+              <input type="text" value={serialInfo.Shift} id="rolloutShift" className="form-control disabled-input" disabled={true} />
             </div>
             <div className="col-12 col-sm-2">
               <label htmlFor="totalDefectCount" className="form-label fw-bold m-0">
