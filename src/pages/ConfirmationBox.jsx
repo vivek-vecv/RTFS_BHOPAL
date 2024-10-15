@@ -2,9 +2,6 @@ import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } 
 import { toast } from 'react-toastify';
 
 const ConfirmationBox = ({ title, message, onConfirm, onCancel, visible }) => {
-  console.log('------------------onConfirm-------------------\n', onConfirm);
-  console.log('------------------handleVisibility-------------------\n', onCancel);
-
   return (
     <CModal visible={visible} onClose={onCancel}>
       <CModalHeader>

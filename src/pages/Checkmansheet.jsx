@@ -455,58 +455,48 @@ export const QGComponent = ({ param }) => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    if (tableEntries.length === 0) {
-      toast.error('No entries in table.'); // Set error if date is blank
-      return;
-    }
-
-    if (!auditDate) {
-      toast.error('Please select an audit date and time.');
-      return; // Exit the function if auditDate is empty
-    }
-
     try {
-      let status;
-      for (const entry of tableEntries) {
-        const dataList = {
-          Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
-          Model: serialInfo.Model, // Adjust as necessary
-          Category: entry.CATEGORY,
-          Part_Name: entry.PART,
-          Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
-          Defect_Desc: entry.DEFECT_DESC,
-          Station: param.station, // Adjust as necessary
-          Demerit: entry.DEMERIT,
-          Tself: entry.TSELF,
-          Head: entry.HEAD,
-          Aggregate: entry.AGGREGATE,
-          Status: 'NOK', // Adjust as necessary
-          Audit_Date: auditDate, // Use the entered audit date
-        };
+      // Iterate over each checkpoint that has selected defects
+      for (const checkpointId in selectedDefects) {
+        const selectedOptions = selectedDefects[checkpointId];
 
-        const serialNumber = chassisNumber; // Adjust as necessary
-        setChassisNumber(chassisNumber);
-        const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
-          JSON.stringify(dataList)
-        )}&Serial_Number=${serialNumber}`;
+        // Iterate over each selected defect for this checkpoint
+        for (const defect of selectedOptions) {
+          const dataList = {
+            Serial_Number: chassisNumber, // Assuming param contains serial number
+            Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
+            Defect_Name: defect.value, // Defect name from the selected option
+            Line_Name: param.line,
+            Station_Name: param.station,
+            Operator_Name: selectedAuditor.value, // Replace with actual operator name
+            Status: defectStatuses[checkpointId], // Get the status (OK/NOK) for the checkpoint
+            Remark: checkpointId, // Assuming you collect remarks per checkpoint
+            Shift_Name: 'A', // Replace with actual shift name if dynamic
+            Username: 'Vivek', // Replace with actual username
+          };
 
-        const response = await axios.post(apiUrl, {
-          auth: {
-            username: 'arun',
-            password: '123456',
-          },
-        });
+          // Send the data via POST request
+          const response = await axios.post(
+            `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?dataList=${encodeURIComponent(
+              JSON.stringify(dataList)
+            )}&Station_Name=${param.station}&checkpoint=${dataList.Checkpoint_Name}`,
+            {
+              auth: {
+                username: 'arun',
+                password: '123456',
+              },
+            }
+          );
 
-        if (response.status === 200) {
-          status = 200;
-          setError('');
+          if (response.status === 200) {
+            console.log(`Defect ${defect.value} for checkpoint ${checkpointId} saved successfully!`);
+          } else {
+            console.error(`Failed to save defect ${defect.value} for checkpoint ${checkpointId}`);
+          }
         }
       }
-      status === 200 ? toast.success(`Data submitted successfully for ${chassisNumber}`) : toast.error('Error submitting data');
-      emptyModel();
     } catch (error) {
-      console.error('Error submitting data:', error);
-      setError('Failed to submit data. Please try again.');
+      console.error('Error saving defects:', error);
     }
   };
 
@@ -557,7 +547,6 @@ export const QGComponent = ({ param }) => {
 
           return acc;
         }, {});
-        console.log('------------------defectsForCheckpoint-------------------\n', defectsForCheckpoint);
 
         // Merge new defects with the existing state
         setDefectOptions((prev) => ({
