@@ -35,9 +35,9 @@ const TorqueModal = ({ isVisible, toggleVisibility, torqueData, sfc }) => {
         )}
       </CModalBody>
       <CModalFooter>
-        <CButton color="secondary" onClick={toggleVisibility}>
+        {/* <CButton color="secondary" onClick={toggleVisibility}>
           Close
-        </CButton>
+        </CButton> */}
       </CModalFooter>
     </CModal>
   );

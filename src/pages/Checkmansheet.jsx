@@ -450,6 +450,7 @@ export const QGComponent = ({ param }) => {
     setTotalDefects((prevTotal) => prevTotal - 1); // Decrease the defect count by 1
     setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0); // Decrease total demerits
   };
+  console.log(selectedDefects);
 
   //==============================Submit function code ===================================================
 
@@ -526,17 +527,17 @@ export const QGComponent = ({ param }) => {
     setModalVisible(true);
   };
 
-  const handleStatusChange = async (defectId, value, checkpoint) => {
+  const handleStatusChange = async (checkpointId, value) => {
     setDefectStatuses((prev) => ({
       ...prev,
-      [defectId]: value,
+      [checkpointId]: value,
     }));
 
     // Fetch defects only if "NOK" is selected
     if (value === 'nok') {
       try {
         const response = await axios.get(
-          `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Name=${checkpoint}`
+          `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
         );
 
         // Group defects based on Checkpoint_Id
@@ -818,7 +819,7 @@ export const QGComponent = ({ param }) => {
                               name={`checkpoint-${checkpoint.Checkpoint_Id}`} // Ensure the name matches for grouping
                               value="ok"
                               checked={defectStatuses[checkpoint.Checkpoint_Id] === 'ok'}
-                              onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'ok', checkpoint.Checkpoint_Name)}
+                              onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'ok')}
                               label={<span className="text-success fw-bold">OK</span>}
                             />
                           </div>
@@ -842,6 +843,7 @@ export const QGComponent = ({ param }) => {
                           isClearable
                           isDisabled={defectStatuses[checkpoint.Checkpoint_Id] !== 'nok'} // Disable when status is not "NOK"
                           styles={reactSelectPopupStyles}
+                          isMulti
                           onChange={(selectedOption) => handleSelectedDefects(checkpoint.Checkpoint_Id, selectedOption)}
                           value={selectedDefects[checkpoint.Checkpoint_Id] || null} // Select the option based on the selected state
                         />

@@ -24,7 +24,7 @@ const Navbar = ({ heading, currentTime, shift }) => {
         <img src={logo} alt="Logo" className="logoImg" style={{ height: '40px' }} />
       </CNavbarBrand>
       <div className="fw-bold text-center ">{data[pathAfterSlash]?.heading} </div>
-      {navbarData && (
+      {navbarData && pathAfterSlash == 'qg' && (
         <div className="fw-bold text-center ">
           {navbarData.line} {'|'} {navbarData.station} {'|'} {navbarData.direction}
         </div>

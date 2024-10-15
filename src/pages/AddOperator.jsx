@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { CModal, CModalHeader, CModalBody, CModalFooter, CButton } from '@coreui/react';
 
-const AddOperator = ({ isVisible, station, shift, onClose }) => {
+const AddOperator = ({ isVisible, station, shift, onClose, auditorRefresh }) => {
   const [error, setError] = useState('');
   const [operatorName, setOperatorName] = useState('');
 
@@ -21,8 +21,9 @@ const AddOperator = ({ isVisible, station, shift, onClose }) => {
         }
       );
       if (response.status === 200) {
-        toast.success('Operator added successfully!');
-        !isVisible; // Close the modal after success
+        var data = response.data;
+        toast.success(data);
+        isVisible = () => !isVisible; // Close the modal after success
       }
     } catch (error) {
       setError(`Failed to add operator. Please try again.${error}`);
@@ -55,9 +56,9 @@ const AddOperator = ({ isVisible, station, shift, onClose }) => {
         <CButton className="btn btn-info text-white fw-bold" onClick={handleSubmit}>
           Add Operator
         </CButton>
-        <CButton className="btn btn-danger text-white fw-bold" onClick={() => onClose}>
+        {/* <CButton className="btn btn-danger text-white fw-bold" onClick={}>
           Cancel
-        </CButton>
+        </CButton> */}
       </CModalFooter>
     </CModal>
   );
