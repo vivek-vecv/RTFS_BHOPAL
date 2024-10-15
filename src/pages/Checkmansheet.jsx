@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
 import { useNavbar } from '../context/NavbarContext.jsx';
+import TorqueModal from './TorqueModal.jsx';
 import { RadioGroup, Radio } from 'react-radio-group';
 const Checkmansheet = () => {
   // const [selectedComponent, setSelectedComponent] = useState(null);
@@ -88,6 +89,8 @@ export const QGComponent = ({ param }) => {
   const [partOptions, setPartOptions] = useState([]);
   const [error, setError] = useState('');
   const [tableEntries, setTableEntries] = useState([]);
+  const [genealogyData, setGenealogyData] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [serialInfo, setSerialInfo] = useState({
     Series: '',
     Engine_Number: '',
@@ -104,6 +107,9 @@ export const QGComponent = ({ param }) => {
   const [defectStatuses, setDefectStatuses] = useState({});
   const [defectOptions, setDefectOptions] = useState({});
   const [selectedDefects, setSelectedDefects] = useState({});
+  const [geneLoading, setGeneloading] = useState(false);
+  const [isTorqueModalVisible, setIsTorqueModalVisible] = useState(false);
+  const [torqueData, setTorqueData] = useState([]);
 
   const emptyModel = () => {
     setTotalDefects(0);
@@ -129,6 +135,53 @@ export const QGComponent = ({ param }) => {
     setSelectedPart(null);
     setAuditDate('');
   };
+
+  const handleGenealogy = async () => {
+    if (chassisNumber) {
+      setGeneloading(true); // Set loading to true before making the API call
+      try {
+        const response = await axios.get(
+          `http://10.119.1.101:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+          {
+            auth: {
+              username: 'arun',
+              password: '123456',
+            },
+          }
+        );
+        setGenealogyData(response.data.Geneaology_Information);
+        setGeneloading(false);
+        setIsModalOpen(true);
+      } catch (error) {
+        setGeneloading(false);
+
+        toast.error('Error in fetching data ', error);
+      }
+    } else {
+      toast.error('Please enter chassis number');
+    }
+  };
+
+  const handleTorqueData = async () => {
+    if (chassisNumber) {
+      try {
+        const response = await axios.get(
+          `http://10.119.1.101:9898/rest/api/getTorqueByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`
+        );
+        setTorqueData(response.data.Torque_Information);
+        setIsTorqueModalVisible(true);
+      } catch (error) {
+        console.error('Error fetching torque data:', error);
+      }
+    } else {
+      toast.error('Please enter chassis number');
+    }
+  };
+
+  const toggleTorqueModal = () => {
+    setIsTorqueModalVisible(!isTorqueModalVisible);
+  };
+
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
       const response = await axios.get(
@@ -513,6 +566,10 @@ export const QGComponent = ({ param }) => {
       [checkpointId]: selectedOption,
     }));
   };
+
+  const closeModal = () => {
+    setIsModalOpen(false); // Function to close modal
+  };
   return (
     <>
       {dataFetchLoading ? (
@@ -615,8 +672,8 @@ export const QGComponent = ({ param }) => {
               <input type="text" id="totalDemerit" className="form-control disabled-input" value={totalDemerits} disabled={true} />
             </div>
           </div>
-          <div className="col-12 col-md-8 row">
-            <div className="col-12 col-sm-6 col-md-4">
+          <div className="col-12 col-md-6 row">
+            <div className="col-12 col-sm-6 col-md-6">
               <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
                 Inspection Date
               </label>
@@ -636,13 +693,13 @@ export const QGComponent = ({ param }) => {
                 />
               </div>
             </div>
-            <div className="col-12 col-sm-6 col-md-4">
+            <div className="col-12 col-sm-6 col-md-6">
               <label htmlFor="inspectorName" className="form-label fw-bold m-0">
-                Checkman Name
+                Operator Name
               </label>
               <Select
                 options={auditorOptions}
-                placeholder="Select auditor"
+                placeholder="Select Operator"
                 isClearable
                 styles={reactSelectPopupStyles}
                 onChange={handleAuditorChange}
@@ -650,22 +707,71 @@ export const QGComponent = ({ param }) => {
               />
             </div>
           </div>
-          <div className="col-12 col-md-4">
+          <div className="col-12 col-md-6">
             <div className="d-flex justify-content-end align-items-end gap-2  mt-4 flex-wrap">
-              <CButton className="btn btn-primary fw-bold" onClick={handleAdd} disabled={loading}>
-                {loading ? <CSpinner size="sm" /> : '+ Add'}
+              <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
+                Submit
               </CButton>
               <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
                 Reset
               </CButton>
-              <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
-                Submit
+              <CButton className="btn btn-primary fw-bold" disabled={loading}>
+                {loading ? <CSpinner size="sm" /> : '+ Add Operator'}
+              </CButton>
+              <CButton className="btn btn-info text-white fw-bold" onClick={handleGenealogy}>
+                Genealogy
+              </CButton>
+              <CButton className="btn btn-warning text-white fw-bold" onClick={handleTorqueData}>
+                Torque
               </CButton>
             </div>
           </div>
         </div>
 
         <hr />
+        {/* genealogy and torque data modal */}
+        <div>
+          <div>
+            {isModalOpen && (
+              <div className="genealogy-modal">
+                <div className="gen-modal-content">
+                  <button className="gen-btn-close" onClick={closeModal}>
+                    ×
+                  </button>
+                  <h5 className="text-center mb-4 fw-bold">
+                    Genealogy Information - <span className="bg-info my-1 mx-1 p-1 rounded-1 text-white">{chassisNumber}</span>
+                  </h5>
+                  {genealogyData && (
+                    <div className="table-responsive">
+                      <table className="table table-hover table-striped border border-start border-end text-center">
+                        <thead className="table-dark">
+                          <tr>
+                            <th className="bg-primary text-white align-middle w-25">Captured Tracibility</th>
+                            <th className="bg-primary text-white align-middle w-25">Station</th>
+                            <th className="bg-primary text-white align-middle w-25">Part Class</th>
+                            <th className="bg-primary text-white align-middle w-25">Part Number</th>
+                          </tr>{' '}
+                        </thead>
+                        <tbody>
+                          {' '}
+                          {genealogyData.map((item, index) => (
+                            <tr key={index}>
+                              <td>{item.Captured_Tracibility}</td>
+                              <td>{item.Station_Name}</td>
+                              <td>{item.Part_Class}</td>
+                              <td>{item.Part_Number}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <TorqueModal isVisible={isTorqueModalVisible} toggleVisibility={toggleTorqueModal} torqueData={torqueData} sfc={chassisNumber} />
+        </div>
         {/* 2nd Div: Dropdowns and Add button */}
         {/* //==================================================================================== */}
 
