@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
 import { useNavbar } from '../context/NavbarContext.jsx';
+import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
 import { RadioGroup, Radio } from 'react-radio-group';
 const Checkmansheet = () => {
@@ -110,6 +111,14 @@ export const QGComponent = ({ param }) => {
   const [geneLoading, setGeneloading] = useState(false);
   const [isTorqueModalVisible, setIsTorqueModalVisible] = useState(false);
   const [torqueData, setTorqueData] = useState([]);
+  const [isOpModalOpen, setOpModalOpen] = useState(false);
+
+  const operatorModal = () => {
+    setOpModalOpen(true);
+  };
+  const closeoperatorModal = () => {
+    setOpModalOpen(false);
+  };
 
   const emptyModel = () => {
     setTotalDefects(0);
@@ -465,7 +474,7 @@ export const QGComponent = ({ param }) => {
           Part_Name: entry.PART,
           Defect_Code: entry.DEFECT_CODE, // Replace with actual defect code if available
           Defect_Desc: entry.DEFECT_DESC,
-          Station: 'PAG', // Adjust as necessary
+          Station: param.station, // Adjust as necessary
           Demerit: entry.DEMERIT,
           Tself: entry.TSELF,
           Head: entry.HEAD,
@@ -715,8 +724,8 @@ export const QGComponent = ({ param }) => {
               <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
                 Reset
               </CButton>
-              <CButton className="btn btn-primary fw-bold" disabled={loading}>
-                {loading ? <CSpinner size="sm" /> : '+ Add Operator'}
+              <CButton className="btn btn-primary fw-bold" onClick={operatorModal}>
+                + Add Operator
               </CButton>
               <CButton className="btn btn-info text-white fw-bold" onClick={handleGenealogy}>
                 Genealogy
@@ -731,45 +740,48 @@ export const QGComponent = ({ param }) => {
         <hr />
         {/* genealogy and torque data modal */}
         <div>
-          <div>
-            {isModalOpen && (
-              <div className="genealogy-modal">
-                <div className="gen-modal-content">
-                  <button className="gen-btn-close" onClick={closeModal}>
-                    ×
-                  </button>
-                  <h5 className="text-center mb-4 fw-bold">
-                    Genealogy Information - <span className="bg-info my-1 mx-1 p-1 rounded-1 text-white">{chassisNumber}</span>
-                  </h5>
-                  {genealogyData && (
-                    <div className="table-responsive">
-                      <table className="table table-hover table-striped border border-start border-end text-center">
-                        <thead className="table-dark">
-                          <tr>
-                            <th className="bg-primary text-white align-middle w-25">Captured Tracibility</th>
-                            <th className="bg-primary text-white align-middle w-25">Station</th>
-                            <th className="bg-primary text-white align-middle w-25">Part Class</th>
-                            <th className="bg-primary text-white align-middle w-25">Part Number</th>
-                          </tr>{' '}
-                        </thead>
-                        <tbody>
-                          {' '}
-                          {genealogyData.map((item, index) => (
-                            <tr key={index}>
-                              <td>{item.Captured_Tracibility}</td>
-                              <td>{item.Station_Name}</td>
-                              <td>{item.Part_Class}</td>
-                              <td>{item.Part_Number}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+          {isModalOpen && (
+            <div>
+              {isModalOpen && (
+                <div className="genealogy-modal">
+                  <div className="gen-modal-content">
+                    <button className="gen-btn-close" onClick={closeModal}>
+                      ×
+                    </button>
+                    <h5 className="text-center mb-4 fw-bold">
+                      Genealogy Information - <span className="bg-info my-1 mx-1 p-1 rounded-1 text-white">{chassisNumber}</span>
+                    </h5>
+                    {genealogyData && (
+                      <div className="table-responsive">
+                        <table className="table table-hover table-striped border border-start border-end text-center">
+                          <thead className="table-dark">
+                            <tr>
+                              <th className="bg-primary text-white align-middle w-25">Captured Tracibility</th>
+                              <th className="bg-primary text-white align-middle w-25">Station</th>
+                              <th className="bg-primary text-white align-middle w-25">Part Class</th>
+                              <th className="bg-primary text-white align-middle w-25">Part Number</th>
+                            </tr>{' '}
+                          </thead>
+                          <tbody>
+                            {' '}
+                            {genealogyData.map((item, index) => (
+                              <tr key={index}>
+                                <td>{item.Captured_Tracibility}</td>
+                                <td>{item.Station_Name}</td>
+                                <td>{item.Part_Class}</td>
+                                <td>{item.Part_Number}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
+          <AddOperator isVisible={isOpModalOpen} station={param.station} shift={'A'} onClose={closeoperatorModal} />
           <TorqueModal isVisible={isTorqueModalVisible} toggleVisibility={toggleTorqueModal} torqueData={torqueData} sfc={chassisNumber} />
         </div>
         {/* 2nd Div: Dropdowns and Add button */}

@@ -2,7 +2,7 @@ import { CModal, CModalHeader, CModalBody, CModalFooter, CButton } from '@coreui
 
 const TorqueModal = ({ isVisible, toggleVisibility, torqueData, sfc }) => {
   return (
-    <CModal visible={isVisible} onClose={toggleVisibility} backdrop={true} size="lg">
+    <CModal visible={isVisible} onClose={toggleVisibility} size="lg">
       <CModalHeader className="text-center fw-bold">
         Torque Information - <span className="bg-info rounded p-1 text-white mx-1"> {sfc}</span>{' '}
       </CModalHeader>
@@ -18,10 +18,10 @@ const TorqueModal = ({ isVisible, toggleVisibility, torqueData, sfc }) => {
                 <th className="bg-primary text-white ">Torque Value</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="align-items-center">
               {torqueData.map((item, index) => (
                 <tr key={index}>
-                  <td>{item.Torque_Status}</td>
+                  <td style={{ color: item.Torque_Status === 'OK' ? 'green' : 'red' }}>{item.Torque_Status}</td>
                   <td>{item.Torque_Name}</td>
                   <td>{item.Station_Name}</td>
                   <td>{item.Torque_Sequence}</td>

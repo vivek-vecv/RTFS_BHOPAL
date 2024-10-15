@@ -8,7 +8,7 @@
 }
 
 .modal.show {
-    z-index: 13000;
+    z-index: 13001;
 }
 
 .modal-backdrop.show {
