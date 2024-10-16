@@ -3,15 +3,14 @@ import axios from 'axios';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { CButton, CSpinner, CModal, CModalHeader, CModalBody, CFormCheck, CFormSelect, CFormInput } from '@coreui/react';
-import { FaTrash } from 'react-icons/fa';
+import { CButton, CSpinner, CModal, CModalHeader, CModalBody, CFormCheck, CFormInput, CModalFooter, CModalTitle } from '@coreui/react';
 import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
 import { useNavbar } from '../context/NavbarContext.jsx';
 import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
-import { RadioGroup, Radio } from 'react-radio-group';
+import ConfirmationBox from './ConfirmationBox.jsx';
 const Checkmansheet = () => {
   // const [selectedComponent, setSelectedComponent] = useState(null);
   const [param, setParam] = useState({});
@@ -81,15 +80,10 @@ export const QGComponent = ({ param }) => {
   const { setNavbarData } = useNavbar();
   setNavbarData(param);
 
-  const [process, setProcess] = useState('static');
   const [dataFetchLoading, setDataFetchLoading] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [chassisNumber, setChassisNumber] = useState('');
   const [auditorOptions, setAuditorOptions] = useState([]);
-  const [partOptions, setPartOptions] = useState([]);
-  const [error, setError] = useState('');
-  const [tableEntries, setTableEntries] = useState([]);
   const [genealogyData, setGenealogyData] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [serialInfo, setSerialInfo] = useState({
@@ -100,7 +94,6 @@ export const QGComponent = ({ param }) => {
     Serial_Number: '',
   });
   const [checkPointData, setCheckPointData] = useState([]);
-  const [selectedPart, setSelectedPart] = useState(null);
   const [selectedAuditor, setSelectedAuditor] = useState(null);
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
@@ -112,6 +105,7 @@ export const QGComponent = ({ param }) => {
   const [isTorqueModalVisible, setIsTorqueModalVisible] = useState(false);
   const [torqueData, setTorqueData] = useState([]);
   const [isOpModalOpen, setOpModalOpen] = useState(false);
+  const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const operatorModal = () => {
     setOpModalOpen(true);
@@ -124,25 +118,31 @@ export const QGComponent = ({ param }) => {
     setTotalDefects(0);
     setTotalDemerits(0);
     setChassisNumber('');
-    setAuditorOptions([]);
-    setPartOptions([]);
     setDefectOptions([]);
-    setSelectedPart(null);
+    setAuditorOptions([]);
+    setDefectOptions([]);
     setSelectedAuditor(null);
     setSelectedDefects([]);
-    setTableEntries([]);
     setSerialInfo({
-      Series: '',
-      Engine_Number: '',
+      Station: '',
+      Fuel_Type: '',
       Model: '',
-      Rollout_Date: '',
+      Line: '',
       Serial_Number: '',
-      Part_Description: '',
+      Shift: '',
       Order_Number: '',
-      Shift_Name: '',
+      Model_Desc: '',
+      Halb_Code: '',
+      Fert_Code: '',
     });
-    setSelectedPart(null);
     setAuditDate('');
+
+    const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
+      acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
+      return acc;
+    }, {});
+
+    setDefectStatuses(initialStatuses);
   };
 
   const handleGenealogy = async () => {
@@ -171,6 +171,8 @@ export const QGComponent = ({ param }) => {
     }
   };
 
+  console.log('------------------isTorqueModalVisible-------------------\n', isTorqueModalVisible);
+
   const handleTorqueData = async () => {
     if (chassisNumber) {
       try {
@@ -187,8 +189,8 @@ export const QGComponent = ({ param }) => {
     }
   };
 
-  const toggleTorqueModal = () => {
-    setIsTorqueModalVisible(!isTorqueModalVisible);
+  const torqueModalClose = () => {
+    setIsTorqueModalVisible(false);
   };
 
   const fetchSerialNumberDetails = async (serialNumber) => {
@@ -258,67 +260,6 @@ export const QGComponent = ({ param }) => {
     fetchChassisNumber(value);
   };
 
-  const fetchPartsData = async (serialNumber, Station, Line) => {
-    // try {
-    //   const response = await axios.get(
-    //     `http://10.119.1.101:9898/rest/api/getCheckpointList?Serial_Number=${serialNumber}&Line_Name=${Line}&Station_Name=${Station}`,
-    //     {
-    //       auth: {
-    //         username: 'arun',
-    //         password: '123456',
-    //       },
-    //     }
-    //   );
-    //   if (response.status === 200) {
-    //     const partsList = response.data['Parts Data_List'] || [];
-    //     setPartOptions(
-    //       partsList.map((part) => ({
-    //         value: part.Part_Name,
-    //         label: part.Part_Name,
-    //       }))
-    //     );
-    //   }
-    // } catch (error) {
-    //   console.error('Error fetching parts data:', error);
-    // }
-  };
-
-  const handlePartChange = async (selectedOption) => {
-    if (selectedOption) {
-      const selectedPartName = selectedOption.value; // Get the selected part's name
-      await fetchDefectsForPart(serialInfo.Series, selectedPartName);
-      setSelectedPart(selectedOption);
-      // Reset the selected defects when part changes
-      setSelectedDefects([]);
-    }
-  };
-
-  const fetchDefectsForPart = async (seriesName, partName) => {
-    try {
-      const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getAllDefectsForAuditPart?Model_Name=${seriesName}&Part_name=${partName}`,
-        {
-          auth: {
-            username: 'arun',
-            password: '123456',
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        const defectsList = response.data.Defect_List || [];
-        setDefectOptions(
-          defectsList.map((defect) => ({
-            value: defect.Defect_Name, // Using Defect_Name directly
-            label: defect.Defect_Name, // Using Defect_Name for description as well
-          }))
-        );
-      }
-    } catch (error) {
-      console.error('Error fetching defects for part:', error);
-    }
-  };
-
   const fetchAuditors = async () => {
     try {
       const response = await axios.get(`http://10.119.1.101:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
@@ -359,146 +300,110 @@ export const QGComponent = ({ param }) => {
     // setIsDisabled(false);
   };
 
-  const handleDefectChange = (selectedOptions) => {
-    setSelectedDefects(selectedOptions); // Update state with selected defects
-  };
-
-  const handleAdd = async () => {
-    if (!selectedPart || selectedDefects.length === 0) {
-      toast.warn('Select part or defect(s) to add', { autoClose: 3000 });
-      return;
-    }
-
-    const model = serialInfo.Series; // Assuming you want to use this model
-    let newDemerits = 0; // Initialize a variable to calculate total demerits
-    const newEntries = []; // Store newly added entries
-
-    // Loop through each selected defect
-    setLoading(true);
-    for (const selectedDefect of selectedDefects) {
-      // Check if the entry already exists
-      const exists = tableEntries.some((entry) => entry.PART === selectedPart.value && entry.DEFECT_DESC === selectedDefect.value);
-
-      if (exists) {
-        toast.error(`Entry already exists for part: ${selectedPart.value} and defect: ${selectedDefect.value}`, { autoClose: 3000 });
-        setLoading(false);
-
-        continue; // Skip this defect if it already exists
-      }
-
-      const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForAudit?part_ID=${encodeURIComponent(
-        selectedPart.value
-      )}&Defect_Desc=${encodeURIComponent(selectedDefect.value)}&Model=${encodeURIComponent(model)}`;
-
-      try {
-        const response = await axios.get(apiUrl, {
-          auth: {
-            username: 'arun',
-            password: '123456',
-          },
-        });
-
-        if (response.status === 200) {
-          const defectInfo = response.data.Defect_Information || [];
-
-          defectInfo.forEach((info) => {
-            const tableRow = {
-              PART: info.Part_Name,
-              DEFECT_DESC: info.Defect_Desc,
-              DEMERIT: info.Demerit,
-              TSELF: info.Tself,
-              AGGREGATE: info.Aggregate,
-              HEAD: info.Head,
-              CATEGORY: info.Category,
-              ZONE: 'N/A',
-              SFC: chassisNumber,
-              STATUS: 'NOK',
-              DEFECT_CODE: info.Defect_Code,
-              // Fallback for zone
-            };
-
-            newEntries.push(tableRow); // Store new entries
-            newDemerits += parseInt(info.Demerit) || 0; // Use parseFloat and fallback to 0 if NaN
-            setSelectedDefects([]);
-          });
-        }
-        setLoading(false);
-      } catch (error) {
-        setLoading(false);
-        console.error('Error fetching defect data:', error);
-        alert('Failed to fetch defect data for ' + selectedDefect.value);
-      }
-    }
-
-    // Update the table entries and totals after the loop
-    setTableEntries((prevEntries) => [...prevEntries, ...newEntries]);
-    setTotalDefects((prevTotal) => prevTotal + newEntries.length); // Update total defects
-    setTotalDemerits((prevTotal) => prevTotal + newDemerits); // Update total demerits
-  };
-
   useEffect(() => {
     fetchAuditors();
   }, []);
 
-  const handleDelete = (index, defectValue, demeritValue) => {
-    setTableEntries((prevEntries) => {
-      const updatedEntries = prevEntries.filter((_, i) => i !== index); // Remove the entry at the specified index
-      return updatedEntries;
-    });
-
-    // Update total defects and demerits
-    setTotalDefects((prevTotal) => prevTotal - 1); // Decrease the defect count by 1
-    setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0); // Decrease total demerits
-  };
-  console.log(selectedDefects);
-
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    try {
-      // Iterate over each checkpoint that has selected defects
-      for (const checkpointId in selectedDefects) {
-        const selectedOptions = selectedDefects[checkpointId];
+    if (chassisNumber) {
+      if (selectedAuditor) {
+        if (selectedDefects.length !== 0) {
+          try {
+            for (const checkpointId in selectedDefects) {
+              const selectedOptions = selectedDefects[checkpointId];
+              for (const defect of selectedOptions) {
+                const CheckpointDefectList = {
+                  Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
+                  Defect_Name: defect.value,
+                  Line_Name: param.line,
+                  Station_Name: param.station,
+                  Operator_Name: selectedAuditor.value,
+                  Status: defectStatuses[checkpointId],
+                  Remark: checkpointId,
+                  Shift_Name: 'A',
+                  Username: '',
+                };
 
-        // Iterate over each selected defect for this checkpoint
-        for (const defect of selectedOptions) {
-          const dataList = {
-            Serial_Number: chassisNumber, // Assuming param contains serial number
-            Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
-            Defect_Name: defect.value, // Defect name from the selected option
-            Line_Name: param.line,
-            Station_Name: param.station,
-            Operator_Name: selectedAuditor.value, // Replace with actual operator name
-            Status: defectStatuses[checkpointId], // Get the status (OK/NOK) for the checkpoint
-            Remark: checkpointId, // Assuming you collect remarks per checkpoint
-            Shift_Name: 'A', // Replace with actual shift name if dynamic
-            Username: 'Vivek', // Replace with actual username
-          };
+                const response = await axios.post(
+                  `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
+                    JSON.stringify(CheckpointDefectList)
+                  )}&Serial_Number=${chassisNumber}`,
 
-          // Send the data via POST request
-          const response = await axios.post(
-            `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?dataList=${encodeURIComponent(
-              JSON.stringify(dataList)
-            )}&Station_Name=${param.station}&checkpoint=${dataList.Checkpoint_Name}`,
-            {
-              auth: {
-                username: 'arun',
-                password: '123456',
-              },
+                  {
+                    auth: {
+                      username: 'arun',
+                      password: '123456',
+                    },
+                  }
+                );
+
+                if (response.status === 200) {
+                  toast.success(`Defect ${defect.value} for checkpoint ${checkpointId} saved successfully!`);
+                } else {
+                  toast.error(`Failed to save defect ${defect.value} for checkpoint ${checkpointId}`);
+                }
+              }
             }
-          );
-
-          if (response.status === 200) {
-            console.log(`Defect ${defect.value} for checkpoint ${checkpointId} saved successfully!`);
-          } else {
-            console.error(`Failed to save defect ${defect.value} for checkpoint ${checkpointId}`);
+          } catch (error) {
+            toast.error('Error saving defects:', error);
           }
+        } else {
+          setConfirmationVisible(true);
         }
+      } else {
+        toast.error('Please select operator name');
       }
-    } catch (error) {
-      console.error('Error saving defects:', error);
+    } else {
+      toast.error('please enter chassis number');
     }
   };
+
+  // const handleSubmit = async () => {
+  //   try {
+  //     const defectsToSubmit = [];
+
+  //     for (const checkpointId in selectedDefects) {
+  //       const selectedOptions = selectedDefects[checkpointId];
+
+  //       for (const defect of selectedOptions) {
+  //         const CheckpointDefectList = {
+  //           Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
+  //           Defect_Name: defect.value,
+  //           Line_Name: param.line,
+  //           Station_Name: param.station,
+  //           Operator_Name: selectedAuditor.value,
+  //           Status: defectStatuses[checkpointId],
+  //           Remark: checkpointId,
+  //           Shift_Name: 'A',
+  //           Username: 'Vivek',
+  //         };
+
+  //         defectsToSubmit.push(CheckpointDefectList);
+  //       }
+  //     }
+  //     console.log(defectsToSubmit);
+  //     const response = await axios.post(
+  //       `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+  //       defectsToSubmit,
+  //       {
+  //         auth: {
+  //           username: 'arun',
+  //           password: '123456',
+  //         },
+  //       }
+  //     );
+
+  //     if (response.status === 200) {
+  //       console.log('All defects saved successfully!');
+  //     } else {
+  //       console.error('Failed to save defects');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error saving defects:', error);
+  //   }
+  // };
 
   const reactSelectPopupStyles = {
     menu: (provided) => ({
@@ -567,8 +472,51 @@ export const QGComponent = ({ param }) => {
   };
 
   const closeModal = () => {
-    setIsModalOpen(false); // Function to close modal
+    setIsModalOpen(false);
   };
+
+  const handleConfirm = async () => {
+    setConfirmationVisible(false);
+    try {
+      const CheckpointDefectList = {
+        Checkpoint_Name: '',
+        Defect_Name: '',
+        Line_Name: param.line,
+        Station_Name: param.station,
+        Operator_Name: selectedAuditor.value,
+        Status: 'All Ok',
+        Remark: 'All Ok',
+        Shift_Name: 'A',
+        Username: 'Vivek',
+      };
+
+      const response = await axios.post(
+        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
+          JSON.stringify(CheckpointDefectList)
+        )}&Serial_Number=${chassisNumber}`,
+        {
+          auth: {
+            username: 'arun',
+            password: '123456',
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        toast.success(`All OK saved successfully!`);
+        emptyModel();
+      } else {
+        toast.error(`Failed to save all ok`);
+      }
+    } catch (error) {
+      toast.error('Error saving defects:', error);
+    }
+  };
+
+  const handleCancel = () => {
+    setConfirmationVisible(false);
+  };
+
   return (
     <>
       {dataFetchLoading ? (
@@ -715,7 +663,7 @@ export const QGComponent = ({ param }) => {
                 Reset
               </CButton>
               <CButton className="btn btn-primary fw-bold" onClick={operatorModal}>
-                + Add Operator
+                Add/Remove Operator
               </CButton>
               <CButton className="btn btn-info text-white fw-bold" onClick={handleGenealogy}>
                 Genealogy
@@ -728,53 +676,66 @@ export const QGComponent = ({ param }) => {
         </div>
 
         <hr />
+
         {/* genealogy and torque data modal */}
         <div>
           {isModalOpen && (
-            <div>
-              {isModalOpen && (
-                <div className="genealogy-modal">
-                  <div className="gen-modal-content">
-                    <button className="gen-btn-close" onClick={closeModal}>
-                      ×
-                    </button>
-                    <h5 className="text-center mb-4 fw-bold">
-                      Genealogy Information - <span className="bg-info my-1 mx-1 p-1 rounded-1 text-white">{chassisNumber}</span>
-                    </h5>
-                    {genealogyData && (
-                      <div className="table-responsive">
-                        <table className="table table-hover table-striped border border-start border-end text-center">
-                          <thead className="table-dark">
-                            <tr>
-                              <th className="bg-primary text-white align-middle w-25">Captured Tracibility</th>
-                              <th className="bg-primary text-white align-middle w-25">Station</th>
-                              <th className="bg-primary text-white align-middle w-25">Part Class</th>
-                              <th className="bg-primary text-white align-middle w-25">Part Number</th>
-                            </tr>{' '}
-                          </thead>
-                          <tbody>
-                            {' '}
-                            {genealogyData.map((item, index) => (
-                              <tr key={index}>
-                                <td>{item.Captured_Tracibility}</td>
-                                <td>{item.Station_Name}</td>
-                                <td>{item.Part_Class}</td>
-                                <td>{item.Part_Number}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+            <CModal size="fullscreen" visible={isModalOpen} onClose={closeModal}>
+              <CModalHeader className="position-sticky top-0">
+                <CModalTitle>
+                  Genealogy Information - <span className="bg-info my-1 mx-1 p-1 rounded-1 text-white">{chassisNumber}</span>
+                </CModalTitle>
+              </CModalHeader>
+              <CModalBody>
+                {genealogyData && (
+                  <div className="table-responsive overflow-auto" style={{ maxHeight: '70vh' }}>
+                    <table className="table table-hover table-striped border border-start border-end text-center border-top-0">
+                      <thead className="table-dark position-sticky top-0">
+                        <tr>
+                          <th className="bg-primary text-white align-middle w-25">Captured Tracibility</th>
+                          <th className="bg-primary text-white align-middle w-25">Station</th>
+                          <th className="bg-primary text-white align-middle w-25">Part Class</th>
+                          <th className="bg-primary text-white align-middle w-25">Part Number</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {genealogyData.map((item, index) => (
+                          <tr key={index}>
+                            <td>{item.Captured_Tracibility}</td>
+                            <td>{item.Station_Name}</td>
+                            <td>{item.Part_Class}</td>
+                            <td>{item.Part_Number}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </CModalBody>
+              <CModalFooter>
+                <CButton color="secondary" onClick={closeModal}>
+                  Close
+                </CButton>
+              </CModalFooter>
+            </CModal>
           )}
-          <AddOperator isVisible={isOpModalOpen} station={param.station} shift={'A'} onClose={closeoperatorModal} />
-          <TorqueModal isVisible={isTorqueModalVisible} toggleVisibility={toggleTorqueModal} torqueData={torqueData} sfc={chassisNumber} />
+          <AddOperator
+            isVisible={isOpModalOpen}
+            station={param.station}
+            fetchAuditors={fetchAuditors}
+            shift={'A'}
+            onClose={closeoperatorModal}
+          />
+          <ConfirmationBox
+            title="Confirm"
+            visible={confirmationVisible}
+            message={`Are you sure to submit All OK?`}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+          />
+          <TorqueModal visible={isTorqueModalVisible} onClose={torqueModalClose} torqueData={torqueData} sfc={chassisNumber} />
         </div>
-        {/* 2nd Div: Dropdowns and Add button */}
+
         {/* //==================================================================================== */}
 
         <div className="container-fluid">

@@ -13,7 +13,6 @@ const Navbar = ({ heading, currentTime, shift }) => {
     pdi: { heading: 'PDI Defect Entry Screen' },
     qg: { heading: 'Quality Gate Defect Entry Screen', zone: ['QG1', 'QG2', 'QG3'] },
   };
-  console.log('------------------navbarData-------------------\n', navbarData);
 
   const location = useLocation();
   const pathname = location.pathname;

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { CModal, CModalHeader, CModalBody, CModalFooter, CButton } from '@coreui/react';
+import { CModal, CModalHeader, CModalBody, CModalFooter, CButton, CForm } from '@coreui/react';
 
-const AddOperator = ({ isVisible, station, shift, onClose, auditorRefresh }) => {
+const AddOperator = ({ isVisible, station, shift, onClose, fetchAuditors }) => {
   const [error, setError] = useState('');
   const [operatorName, setOperatorName] = useState('');
 
@@ -20,10 +20,13 @@ const AddOperator = ({ isVisible, station, shift, onClose, auditorRefresh }) => 
           },
         }
       );
+      console.log('------------------response-------------------\n', response);
+
       if (response.status === 200) {
-        var data = response.data;
-        toast.success(data);
-        isVisible = () => !isVisible; // Close the modal after success
+        toast.success('Operator added successfully');
+        onClose(); // Close the modal after success
+        fetchAuditors();
+        setOperatorName('');
       }
     } catch (error) {
       setError(`Failed to add operator. Please try again.${error}`);
@@ -33,33 +36,35 @@ const AddOperator = ({ isVisible, station, shift, onClose, auditorRefresh }) => 
   if (!isVisible) return null;
 
   return (
-    <CModal visible={isVisible} onClose={onClose} backdrop="static">
-      <CModalHeader className="fw-bold">Add Operator</CModalHeader>
-      <CModalBody>
-        <div className="d-flex">
-          <label htmlFor="addOperator" className="form-label fw-bold m-0">
-            Operator Name
-          </label>
-          <div className="input-group">
-            <input
-              type="text"
-              id="addOperator"
-              className="form-control"
-              placeholder="Enter Operator Name"
-              onChange={(e) => setOperatorName(e.target.value)}
-              value={operatorName}
-            />
+    <CModal visible={isVisible} onClose={onClose}>
+      <CForm onSubmit={handleSubmit}>
+        <CModalHeader className="fw-bold">Add Operator</CModalHeader>
+        <CModalBody>
+          <div className="d-flex">
+            <label htmlFor="addOperator" className="form-label fw-bold m-0">
+              Operator Name
+            </label>
+            <div className="input-group">
+              <input
+                type="text"
+                id="addOperator"
+                className="form-control"
+                placeholder="Enter Operator Name"
+                onChange={(e) => setOperatorName(e.target.value)}
+                value={operatorName}
+              />
+            </div>
           </div>
-        </div>
-      </CModalBody>
-      <CModalFooter>
-        <CButton className="btn btn-info text-white fw-bold" onClick={handleSubmit}>
-          Add Operator
-        </CButton>
-        {/* <CButton className="btn btn-danger text-white fw-bold" onClick={}>
+        </CModalBody>
+        <CModalFooter>
+          <CButton className="btn btn-info text-white fw-bold" onClick={handleSubmit}>
+            Add Operator
+          </CButton>
+          {/* <CButton className="btn btn-danger text-white fw-bold" onClick={}>
           Cancel
-        </CButton> */}
-      </CModalFooter>
+          </CButton> */}
+        </CModalFooter>
+      </CForm>
     </CModal>
   );
 };

@@ -1,4 +1,4 @@
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, Slide } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export default function Toaster() {
@@ -12,6 +12,7 @@ export default function Toaster() {
       rtl={false}
       pauseOnFocusLoss
       draggable
+      transition={Slide}
       style={{
         zIndex: 12000,
       }}
