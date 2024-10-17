@@ -7,11 +7,11 @@ import PDIComponent from './pages/PDI_DefectEntryScreen.jsx';
 import PAGComponent from './pages/audit_entry.jsx';
 import QGComponent from './pages/Checkmansheet.jsx';
 import Toaster from './pages/Toaster.jsx';
-import { toast } from 'react-toastify';
 import MainDashboard from './pages/MainDashboard.jsx';
 import Navbar from './pages/navbar.jsx';
 import './assets/custom.css';
 import { NavbarProvider } from './context/NavbarContext.jsx';
+import PostRolloutComponent from './pages/PostRollout.jsx';
 
 const App = () => {
   return (
@@ -46,6 +46,14 @@ const App = () => {
               element={
                 // <ProtectedRoute>
                 <QGComponent />
+                // </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pr"
+              element={
+                // <ProtectedRoute>
+                <PostRolloutComponent />
                 // </ProtectedRoute>
               }
             />

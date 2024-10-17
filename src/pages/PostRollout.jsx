@@ -11,56 +11,42 @@ import { useNavbar } from '../context/NavbarContext.jsx';
 import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
-const Checkmansheet = () => {
-  // const [selectedComponent, setSelectedComponent] = useState(null);
+
+const PostRollout = () => {
   const [param, setParam] = useState({});
-  const [showButtons, setShowButtons] = useState(true); // State to manage button visibility
+  const [showButtons, setShowButtons] = useState(true);
 
   const handleButtonClick = (paramValue) => {
     setParam(paramValue);
-    setShowButtons(false); // Hide buttons after selection
+    showButtons;
+    setShowButtons(false);
   };
-
+  console.log(showButtons);
   const params = [
-    { line: 'Chassis', station: 'QG01', direction: 'Left' },
-    { line: 'Chassis', station: 'QG01', direction: 'Right' },
-    { line: 'Chassis', station: 'QG02', direction: 'Left' },
-    { line: 'Chassis', station: 'QG02', direction: 'Right' },
-    { line: 'Chassis', station: 'QG03', direction: 'Left' },
-    { line: 'Chassis', station: 'QG03', direction: 'Right' },
-    { line: 'Cabtrim', station: 'QG01' },
-    { line: 'Cabtrim', station: 'QG02' },
-    { line: 'Cabtrim', station: 'QG03' },
+    { line: 'POST_ROLLOUT', station: 'RBT' },
+    { line: 'POST_ROLLOUT', station: 'WAM' },
+    { line: 'POST_ROLLOUT', station: 'SHOWER' },
+    { line: 'POST_ROLLOUT', station: 'PIT' },
+    { line: 'POST_ROLLOUT', station: 'SMOKETEST' },
+    { line: 'POST_ROLLOUT', station: 'ROADTEST' },
+    { line: 'POST_ROLLOUT', station: 'DISPATCH' },
+    ,
   ];
 
   // Categorize params based on line
-  const chassisParams = params.filter((item) => item.line === 'Chassis');
-  const cabtrimParams = params.filter((item) => item.line === 'Cabtrim');
+  const rolloutParams = params.filter((item) => item.line === 'POST_ROLLOUT');
 
   return (
     <div>
       {showButtons && (
         <div className="container mt-4">
-          <h3>Select Line and Station</h3>
+          <h3>Select Station Post Rollout</h3>
           <div className="border border-2 border-info rounded p-3 mb-4 shadow-sm">
-            <h3 className="h5">Chassis</h3>
             <div className="row">
-              {chassisParams.map((item, index) => (
+              {rolloutParams.map((item, index) => (
                 <div key={index} className="col-12 col-sm-6 col-lg-3">
                   <CButton onClick={() => handleButtonClick(item)} className="btn-primary w-100 mb-3 fw-bold">
-                    {`${item.line} ${item.station} ${item.direction ? item.direction : ''}`}
-                  </CButton>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="border border-2 border-info rounded p-3 mb-4 shadow-sm">
-            <h3 className="h5">Cabtrim</h3>
-            <div className="row">
-              {cabtrimParams.map((item, index) => (
-                <div key={index} className="col-12 col-sm-6 col-lg-3">
-                  <CButton onClick={() => handleButtonClick(item)} className="btn-secondary w-100 mb-3 fw-bold">
-                    {`${item.line} ${item.station}`}
+                    {`${item.station}`}
                   </CButton>
                 </div>
               ))}
@@ -70,14 +56,15 @@ const Checkmansheet = () => {
       )}
       {!showButtons &&
         param && ( // Render MyComponent if parameters are set
-          <QGComponent param={param} />
+          <PostRolloutComponent param={param} />
         )}
     </div>
   );
 };
 
-export const QGComponent = ({ param }) => {
+export const PostRolloutComponent = ({ param }) => {
   const { setNavbarData } = useNavbar();
+
   setNavbarData(param);
 
   const [dataFetchLoading, setDataFetchLoading] = useState(false);
@@ -148,7 +135,7 @@ export const QGComponent = ({ param }) => {
 
   const handleGenealogy = async () => {
     if (chassisNumber) {
-      setGeneloading(true); // Set loading to true before making the API call
+      setGeneloading(true);
       try {
         const response = await axios.get(
           `http://10.119.1.101:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
@@ -171,8 +158,6 @@ export const QGComponent = ({ param }) => {
       toast.error('Please enter chassis number');
     }
   };
-
-  console.log('------------------isTorqueModalVisible-------------------\n', isTorqueModalVisible);
 
   const handleTorqueData = async () => {
     if (chassisNumber) {
@@ -222,10 +207,10 @@ export const QGComponent = ({ param }) => {
         });
 
         const checkPointData = response.data.Checkpoint_table_Details;
-        if (checkPointData.length) {
+        if (checkPointData) {
           setCheckPointData(checkPointData);
         } else {
-          toast.info(`No checkpoint available for ${param.line}-${param.station}`);
+          toast.info(`No checkpoint available for${param.line}-${param.station}`);
         }
 
         const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
@@ -233,8 +218,6 @@ export const QGComponent = ({ param }) => {
           return acc;
         }, {});
         setDefectStatuses(initialStatuses);
-
-        await fetchPartsData(serialInformation.Serial_Number, serialInformation.Station, serialInformation.Line);
         return serialInformation.Serial_Number;
       }
     } catch (error) {
@@ -312,8 +295,6 @@ export const QGComponent = ({ param }) => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    console.log('------------------running-------------------\n');
-
     if (chassisNumber) {
       if (selectedAuditor) {
         if (Object.keys(selectedDefects).length) {
@@ -366,51 +347,6 @@ export const QGComponent = ({ param }) => {
       toast.error('please enter chassis number');
     }
   };
-
-  // const handleSubmit = async () => {
-  //   try {
-  //     const defectsToSubmit = [];
-
-  //     for (const checkpointId in selectedDefects) {
-  //       const selectedOptions = selectedDefects[checkpointId];
-
-  //       for (const defect of selectedOptions) {
-  //         const CheckpointDefectList = {
-  //           Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
-  //           Defect_Name: defect.value,
-  //           Line_Name: param.line,
-  //           Station_Name: param.station,
-  //           Operator_Name: selectedAuditor.value,
-  //           Status: defectStatuses[checkpointId],
-  //           Remark: checkpointId,
-  //           Shift_Name: 'A',
-  //           Username: 'Vivek',
-  //         };
-
-  //         defectsToSubmit.push(CheckpointDefectList);
-  //       }
-  //     }
-  //     console.log(defectsToSubmit);
-  //     const response = await axios.post(
-  //       `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
-  //       defectsToSubmit,
-  //       {
-  //         auth: {
-  //           username: 'arun',
-  //           password: '123456',
-  //         },
-  //       }
-  //     );
-
-  //     if (response.status === 200) {
-  //       console.log('All defects saved successfully!');
-  //     } else {
-  //       console.error('Failed to save defects');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error saving defects:', error);
-  //   }
-  // };
 
   const reactSelectPopupStyles = {
     menu: (provided) => ({
@@ -742,7 +678,7 @@ export const QGComponent = ({ param }) => {
           )}
           <AddOperator
             isVisible={isOpModalOpen}
-            station={param.station}
+            station={'POST_ROLLOUT'}
             fetchAuditors={fetchAuditors}
             shift={'A'}
             onClose={closeoperatorModal}
@@ -835,4 +771,4 @@ export const QGComponent = ({ param }) => {
   );
 };
 
-export default Checkmansheet;
+export default PostRollout;

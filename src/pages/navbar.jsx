@@ -1,6 +1,4 @@
 // Navbar.js
-
-import React from 'react';
 import { CNavbar, CNavbarBrand, CNavbarText } from '@coreui/react';
 import logo from '../images/eicher_logo.png';
 import { useLocation } from 'react-router-dom';
@@ -23,11 +21,12 @@ const Navbar = ({ heading, currentTime, shift }) => {
         <img src={logo} alt="Logo" className="logoImg" style={{ height: '40px' }} />
       </CNavbarBrand>
       <div className="fw-bold text-center ">{data[pathAfterSlash]?.heading} </div>
-      {navbarData && pathAfterSlash == 'qg' && (
-        <div className="fw-bold text-center ">
-          {navbarData.line} {'|'} {navbarData.station} {'|'} {navbarData.direction}
-        </div>
-      )}
+      {(navbarData && pathAfterSlash == 'qg') ||
+        (navbarData && pathAfterSlash == 'pr' && (
+          <div className="fw-bold text-center ">
+            {navbarData.line} {'|'} {navbarData.station} {'|'} {navbarData.direction}
+          </div>
+        ))}
       <div>
         <CNavbarText className="navText" style={{ marginRight: '20px' }}>
           {currentTime}
