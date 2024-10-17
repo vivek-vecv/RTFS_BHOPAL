@@ -30,7 +30,6 @@ const PostRollout = () => {
     { line: 'POST_ROLLOUT', station: 'SMOKETEST' },
     { line: 'POST_ROLLOUT', station: 'ROADTEST' },
     { line: 'POST_ROLLOUT', station: 'DISPATCH' },
-    ,
   ];
 
   // Categorize params based on line
@@ -228,7 +227,7 @@ export const PostRolloutComponent = ({ param }) => {
   const fetchChassisNumber = async (value) => {
     setDataFetchLoading(true);
     try {
-      if (value.length == 6 || value.length == 17 || value.length == 10) {
+      if (value.length >= 6) {
         const chassis = await fetchSerialNumberDetails(value);
         if (chassis) {
           setChassisNumber(chassis);

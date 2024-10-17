@@ -22,12 +22,12 @@ const Checkmansheet = () => {
   };
 
   const params = [
-    { line: 'Chassis', station: 'QG01', direction: 'Left' },
-    { line: 'Chassis', station: 'QG01', direction: 'Right' },
-    { line: 'Chassis', station: 'QG02', direction: 'Left' },
-    { line: 'Chassis', station: 'QG02', direction: 'Right' },
-    { line: 'Chassis', station: 'QG03', direction: 'Left' },
-    { line: 'Chassis', station: 'QG03', direction: 'Right' },
+    { line: 'Chassis', station: 'QG01L', direction: 'Left' },
+    { line: 'Chassis', station: 'QG01R', direction: 'Right' },
+    { line: 'Chassis', station: 'QG02L', direction: 'Left' },
+    { line: 'Chassis', station: 'QG02R', direction: 'Right' },
+    { line: 'Chassis', station: 'QG03L', direction: 'Left' },
+    { line: 'Chassis', station: 'QG03R', direction: 'Right' },
     { line: 'Cabtrim', station: 'QG01' },
     { line: 'Cabtrim', station: 'QG02' },
     { line: 'Cabtrim', station: 'QG03' },
@@ -172,8 +172,6 @@ export const QGComponent = ({ param }) => {
     }
   };
 
-  console.log('------------------isTorqueModalVisible-------------------\n', isTorqueModalVisible);
-
   const handleTorqueData = async () => {
     if (chassisNumber) {
       try {
@@ -233,8 +231,6 @@ export const QGComponent = ({ param }) => {
           return acc;
         }, {});
         setDefectStatuses(initialStatuses);
-
-        await fetchPartsData(serialInformation.Serial_Number, serialInformation.Station, serialInformation.Line);
         return serialInformation.Serial_Number;
       }
     } catch (error) {
@@ -245,7 +241,7 @@ export const QGComponent = ({ param }) => {
   const fetchChassisNumber = async (value) => {
     setDataFetchLoading(true);
     try {
-      if (value.length == 6 || value.length == 17 || value.length == 10) {
+      if (value.length >= 6) {
         const chassis = await fetchSerialNumberDetails(value);
         if (chassis) {
           setChassisNumber(chassis);
@@ -366,51 +362,6 @@ export const QGComponent = ({ param }) => {
       toast.error('please enter chassis number');
     }
   };
-
-  // const handleSubmit = async () => {
-  //   try {
-  //     const defectsToSubmit = [];
-
-  //     for (const checkpointId in selectedDefects) {
-  //       const selectedOptions = selectedDefects[checkpointId];
-
-  //       for (const defect of selectedOptions) {
-  //         const CheckpointDefectList = {
-  //           Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
-  //           Defect_Name: defect.value,
-  //           Line_Name: param.line,
-  //           Station_Name: param.station,
-  //           Operator_Name: selectedAuditor.value,
-  //           Status: defectStatuses[checkpointId],
-  //           Remark: checkpointId,
-  //           Shift_Name: 'A',
-  //           Username: 'Vivek',
-  //         };
-
-  //         defectsToSubmit.push(CheckpointDefectList);
-  //       }
-  //     }
-  //     console.log(defectsToSubmit);
-  //     const response = await axios.post(
-  //       `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
-  //       defectsToSubmit,
-  //       {
-  //         auth: {
-  //           username: 'arun',
-  //           password: '123456',
-  //         },
-  //       }
-  //     );
-
-  //     if (response.status === 200) {
-  //       console.log('All defects saved successfully!');
-  //     } else {
-  //       console.error('Failed to save defects');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error saving defects:', error);
-  //   }
-  // };
 
   const reactSelectPopupStyles = {
     menu: (provided) => ({

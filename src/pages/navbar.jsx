@@ -21,12 +21,11 @@ const Navbar = ({ heading, currentTime, shift }) => {
         <img src={logo} alt="Logo" className="logoImg" style={{ height: '40px' }} />
       </CNavbarBrand>
       <div className="fw-bold text-center ">{data[pathAfterSlash]?.heading} </div>
-      {(navbarData && pathAfterSlash == 'qg') ||
-        (navbarData && pathAfterSlash == 'pr' && (
-          <div className="fw-bold text-center ">
-            {navbarData.line} {'|'} {navbarData.station} {'|'} {navbarData.direction}
-          </div>
-        ))}
+      {((navbarData && pathAfterSlash == 'qg') || (navbarData && pathAfterSlash == 'pr')) && (
+        <div className="fw-bold text-center ">
+          {navbarData.line} {'|'} {navbarData.station} {'|'} {navbarData.direction}
+        </div>
+      )}
       <div>
         <CNavbarText className="navText" style={{ marginRight: '20px' }}>
           {currentTime}
