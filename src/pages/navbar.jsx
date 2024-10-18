@@ -27,7 +27,9 @@ const Navbar = () => {
       <CNavbarBrand>
         <img src={logo} alt="Logo" className="logoImg" style={{ height: '40px' }} />
       </CNavbarBrand>
-      <div className="fw-bold text-center ">{data[pathAfterSlash]?.heading} </div>
+      <div className="fw-bold text-center ">
+        {data[pathAfterSlash]?.heading ? data[pathAfterSlash]?.heading : 'Real Time Feedback System - Bhopal'}{' '}
+      </div>
       {((navbarData && pathAfterSlash == 'qg') || (navbarData && pathAfterSlash == 'pr')) && (
         <div className="fw-bold text-center bg-info rounded px-2">
           {navbarData.line == 'POST_ROLLOUT' ? 'Post Rollout' : navbarData.line} {'| '}
