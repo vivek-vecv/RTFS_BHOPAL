@@ -62,7 +62,7 @@ const AuditEntry = () => {
   };
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForAudit/?Serial_Number=${serialNumber}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForAudit?Serial_Number=${serialNumber}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -141,10 +141,10 @@ const AuditEntry = () => {
 
   const handlePartChange = async (selectedOption) => {
     if (selectedOption) {
-      const selectedPartName = selectedOption.value; // Get the selected part's name
+      const selectedPartName = selectedOption.value;
       await fetchDefectsForPart(serialInfo.Series, selectedPartName);
       setSelectedPart(selectedOption);
-      // Reset the selected defects when part changes
+
       setSelectedDefects([]);
     }
   };
@@ -165,8 +165,8 @@ const AuditEntry = () => {
         const defectsList = response.data.Defect_List || [];
         setDefectOptions(
           defectsList.map((defect) => ({
-            value: defect.Defect_Name, // Using Defect_Name directly
-            label: defect.Defect_Name, // Using Defect_Name for description as well
+            value: defect.Defect_Name,
+            label: defect.Defect_Name,
           }))
         );
       }
@@ -212,11 +212,10 @@ const AuditEntry = () => {
 
   const fetchHeaderData = (chassisNumber) => {
     console.log(`Fetching data for chassis: ${chassisNumber}`);
-    // setIsDisabled(false);
   };
 
   const handleDefectChange = (selectedOptions) => {
-    setSelectedDefects(selectedOptions); // Update state with selected defects
+    setSelectedDefects(selectedOptions);
   };
 
   const handleAdd = async () => {
@@ -225,21 +224,19 @@ const AuditEntry = () => {
       return;
     }
 
-    const model = serialInfo.Series; // Assuming you want to use this model
-    let newDemerits = 0; // Initialize a variable to calculate total demerits
-    const newEntries = []; // Store newly added entries
+    const model = serialInfo.Series;
+    let newDemerits = 0;
+    const newEntries = [];
 
-    // Loop through each selected defect
     setLoading(true);
     for (const selectedDefect of selectedDefects) {
-      // Check if the entry already exists
       const exists = tableEntries.some((entry) => entry.PART === selectedPart.value && entry.DEFECT_DESC === selectedDefect.value);
 
       if (exists) {
         toast.error(`Entry already exists for part: ${selectedPart.value} and defect: ${selectedDefect.value}`, { autoClose: 3000 });
         setLoading(false);
 
-        continue; // Skip this defect if it already exists
+        continue;
       }
 
       const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForAudit?part_ID=${encodeURIComponent(
@@ -270,11 +267,10 @@ const AuditEntry = () => {
               SFC: chassisNumber,
               STATUS: 'NOK',
               DEFECT_CODE: info.Defect_Code,
-              // Fallback for zone
             };
 
-            newEntries.push(tableRow); // Store new entries
-            newDemerits += parseInt(info.Demerit) || 0; // Use parseFloat and fallback to 0 if NaN
+            newEntries.push(tableRow);
+            newDemerits += parseInt(info.Demerit) || 0;
             setSelectedDefects([]);
           });
         }
@@ -286,10 +282,9 @@ const AuditEntry = () => {
       }
     }
 
-    // Update the table entries and totals after the loop
     setTableEntries((prevEntries) => [...prevEntries, ...newEntries]);
-    setTotalDefects((prevTotal) => prevTotal + newEntries.length); // Update total defects
-    setTotalDemerits((prevTotal) => prevTotal + newDemerits); // Update total demerits
+    setTotalDefects((prevTotal) => prevTotal + newEntries.length);
+    setTotalDemerits((prevTotal) => prevTotal + newDemerits);
   };
 
   useEffect(() => {
@@ -298,13 +293,12 @@ const AuditEntry = () => {
 
   const handleDelete = (index, defectValue, demeritValue) => {
     setTableEntries((prevEntries) => {
-      const updatedEntries = prevEntries.filter((_, i) => i !== index); // Remove the entry at the specified index
+      const updatedEntries = prevEntries.filter((_, i) => i !== index);
       return updatedEntries;
     });
 
-    // Update total defects and demerits
-    setTotalDefects((prevTotal) => prevTotal - 1); // Decrease the defect count by 1
-    setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0); // Decrease total demerits
+    setTotalDefects((prevTotal) => prevTotal - 1);
+    setTotalDemerits((prevTotal) => prevTotal - parseInt(demeritValue) || 0);
   };
 
   //==============================Submit function code ===================================================
@@ -318,22 +312,23 @@ const AuditEntry = () => {
       }
 
       await proceedWithSubmission();
+    } else {
+      toast.error('Please enter chassis to submit.');
     }
-    toast.error('Please enter chassis to submit.');
   };
 
   const proceedWithSubmission = async () => {
     if (!auditDate) {
       toast.error('Please select inspection date and time.');
-      return; // Exit the function if auditDate is empty
+      return;
     }
 
     try {
       let status;
       if (tableEntries.length === 0) {
         const dataList = {
-          Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
-          Model: serialInfo.Model, // Adjust as necessary
+          Rollout_Date: serialInfo.Rollout_Date,
+          Model: serialInfo.Model,
           Category: '',
           Part_Name: '',
           Defect_Code: '',
@@ -347,7 +342,7 @@ const AuditEntry = () => {
           Audit_Date: auditDate,
         };
 
-        const serialNumber = chassisNumber; // Adjust as necessary
+        const serialNumber = chassisNumber;
         setChassisNumber(chassisNumber);
         const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
           JSON.stringify(dataList)
@@ -368,22 +363,22 @@ const AuditEntry = () => {
         setDefectStatus('Not OK');
         for (const entry of tableEntries) {
           const dataList = {
-            Rollout_Date: serialInfo.Rollout_Date, // Adjust as necessary
-            Model: serialInfo.Model, // Adjust as necessary
+            Rollout_Date: serialInfo.Rollout_Date,
+            Model: serialInfo.Model,
             Category: entry.CATEGORY,
             Part_Name: entry.PART,
             Defect_Code: entry.DEFECT_CODE,
             Defect_Desc: entry.DEFECT_DESC,
-            Station: 'PDI', // Adjust as necessary
+            Station: 'PDI',
             Demerit: entry.DEMERIT,
             Tself: entry.TSELF,
             Head: entry.HEAD,
             Aggregate: entry.AGGREGATE,
-            Status: defectStatus, // Adjust as necessary
-            Audit_Date: auditDate, // Use the entered audit date
+            Status: defectStatus,
+            Audit_Date: auditDate,
           };
 
-          const serialNumber = chassisNumber; // Adjust as necessary
+          const serialNumber = chassisNumber;
           setChassisNumber(chassisNumber);
           const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
@@ -413,27 +408,25 @@ const AuditEntry = () => {
   const reactSelectPopupStyles = {
     menu: (provided) => ({
       ...provided,
-      zIndex: 10000, // Adjust this value as needed
+      zIndex: 10000,
     }),
   };
 
-  // Function to handle scanned value
   const handleScan = (value) => {
     setChassisNumber(value);
-    setModalVisible(false); // Set the scanned value in input field
+    setModalVisible(false);
     fetchChassisNumber(value);
   };
   const handleQrClick = () => {
     setModalVisible(true);
   };
   const handleConfirm = async () => {
-    setConfirmationVisible(false); // Close the confirmation modal
-    await proceedWithSubmission(); // Proceed with submission even if the table is empty
+    setConfirmationVisible(false);
+    await proceedWithSubmission();
   };
 
-  // Handle user cancel
   const handleCancel = () => {
-    setConfirmationVisible(false); // Close the confirmation modal without submitting
+    setConfirmationVisible(false);
   };
 
   return (
@@ -615,8 +608,8 @@ const AuditEntry = () => {
                   placeholder="Select defects"
                   isClearable
                   isMulti
-                  value={selectedDefects} // Bind the selected defects to the component
-                  onChange={handleDefectChange} // Set the onChange prop
+                  value={selectedDefects}
+                  onChange={handleDefectChange}
                 />
               </div>
             </div>
@@ -638,13 +631,12 @@ const AuditEntry = () => {
 
         {/* Table Section */}
         {tableEntries.length > 0 && (
-          // <div className=" my-4 table-section" style={{ maxHeight: '400px', overflowY: 'auto', position: 'relative' }}>
           <div className="d-flex flex-column my-3 " style={{ height: '100vh' }}>
             <div className="flex-grow-1" style={{ overflowY: 'auto' }}>
               <table
                 className="table table-striped table-hover table-bordered"
                 style={{
-                  minWidth: '800px', // Set the minimum height
+                  minWidth: '800px',
                 }}
               >
                 <thead className="position-sticky top-0" style={{ position: 'sticky', top: 0, zIndex: 1, backgroundColor: '#f8f9fa' }}>

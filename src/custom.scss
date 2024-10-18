@@ -1,4 +1,4 @@
-// @import "./../../node_modules/@coreui/coreui/scss/";
+// @import './../node_modules/@coreui/coreui/scss/variables';
 
 // Override CoreUI variables
 $primary: #091057; // Change primary color
@@ -9,4 +9,4 @@ $primary: #091057; // Change primary color
 // $danger: #dc3545; // Change danger color
 
 // Import the CoreUI styles again to apply your customizations
-@import "./../node_modules/@coreui/coreui/scss/coreui";
+@import './../node_modules/@coreui/coreui/scss/coreui';

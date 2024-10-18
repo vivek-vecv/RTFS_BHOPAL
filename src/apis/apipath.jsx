@@ -1,9 +1,8 @@
-import { BASE_URL, SERVER_URL } from "../config.jsx";
+import { BASE_URL, SERVER_URL } from '../config.jsx';
 
-export const API_URL = "http://10.119.1.130/apis";
+export const API_URL = 'http://10.119.1.130/apis';
 
 const apiUrl = import.meta.env.VITE_API_URL;
-console.log("------------------apiUrl-------------------\n", apiUrl);
 
 export const Route_Selection = `${apiUrl}/rest/api/getAllRouteNames`;
 export const step_selection = `${apiUrl}/rest/api/getStepsByRouteName`;
@@ -15,10 +14,10 @@ export const delete_operator = `${apiUrl}/FTPCApps/rest/api/deleteOperatorDataBy
 export const Operator_login = `${apiUrl}/FTPCApps/rest/api/getOperatorDataByStation`;
 export const login_api = `${apiUrl}/rest/api/login`;
 
-export const testAPi = "https://jsonplaceholder.typicode.com/todos/1";
+export const testAPi = 'https://jsonplaceholder.typicode.com/todos/1';
 
 export const etbApi =
-  "http://mexd.vecv.net:50011/XMII/Runner?Transaction=Default/Vivek/BLS_GetHDZoneAlertDetailsWithCount&InLine=HD&InZone=Zone-4&OutputParameter=jsonOutput&Content-Type=text/json&j_user=vmishra3&j_password=vecv@1234&session=false";
+  'http://mexd.vecv.net:50011/XMII/Runner?Transaction=Default/Vivek/BLS_GetHDZoneAlertDetailsWithCount&InLine=HD&InZone=Zone-4&OutputParameter=jsonOutput&Content-Type=text/json&j_user=vmishra3&j_password=vecv@1234&session=false';
 //===========================================with Proxy========================================
 // export const Route_Selection = "rest/api/getAllRouteNames";
 // export const step_selection = "rest/api/getStepsByRouteName";
@@ -40,16 +39,14 @@ export const etbApi =
 // };
 export const headers = {
   headers: {
-    "Access-Control-Allow-Headers":
-      "accept, authorization, content-type, x-requested-with, *, Origin, Content-Type, Accept, Authorization",
-    "Access-Control-Allow-Methods":
-      "GET, POST, PUT, *, GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Origin": "*",
-    "Cache-Control": "no-cache, no-store, must-revalidate",
-    "Content-Type": "application/json",
+    'Access-Control-Allow-Headers': 'accept, authorization, content-type, x-requested-with, *, Origin, Content-Type, Accept, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, *, GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Content-Type': 'application/json',
   },
   auth: {
-    username: "Arun",
-    password: "123456",
+    username: 'Arun',
+    password: '123456',
   },
 };

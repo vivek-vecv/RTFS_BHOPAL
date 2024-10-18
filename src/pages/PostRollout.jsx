@@ -21,7 +21,7 @@ const PostRollout = () => {
     showButtons;
     setShowButtons(false);
   };
-  console.log(showButtons);
+
   const params = [
     { line: 'POST_ROLLOUT', station: 'RBT' },
     { line: 'POST_ROLLOUT', station: 'WAM' },
@@ -33,7 +33,7 @@ const PostRollout = () => {
   ];
 
   // Categorize params based on line
-  const rolloutParams = params.filter((item) => item.line === 'POST_ROLLOUT');
+  const rolloutParams = params.filter((item) => item.line === 'POST_ROLLOUT' || item.line === 'Post_Rollout');
 
   return (
     <div>
@@ -181,7 +181,7 @@ export const PostRolloutComponent = ({ param }) => {
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getQualityGateSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+        `http://10.119.1.101:9898/rest/api/getFviSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
         {
           auth: {
             username: 'arun',
@@ -191,21 +191,21 @@ export const PostRolloutComponent = ({ param }) => {
       );
 
       if (response.status === 200) {
-        const serialInformation = response.data.Header_Details[0];
+        const serialInformation = response.data['PostRollout_Header_Details: '][0];
+
         setSerialInfo({
-          Station: serialInformation.Station,
           Fuel_Type: serialInformation.Fuel_Type,
           Model: serialInformation.Model,
           Line: serialInformation.Line,
           Serial_Number: serialInformation.Serial_Number,
+          Part_Description: serialInformation.Part_Description,
           Shift: serialInformation.Shift,
           Order_Number: serialInformation.Order_Number,
-          Model_Desc: serialInformation.Model_Desc,
           Halb_Code: serialInformation.Halb_Code,
           Fert_Code: serialInformation.Fert_Code,
         });
 
-        const checkPointData = response.data.Checkpoint_table_Details;
+        const checkPointData = response.data['Checkpoint_table_Details'];
         if (checkPointData) {
           setCheckPointData(checkPointData);
         } else {
@@ -294,44 +294,53 @@ export const PostRolloutComponent = ({ param }) => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
+    console.log(selectedDefects);
     if (chassisNumber) {
       if (selectedAuditor) {
         if (Object.keys(selectedDefects).length) {
           try {
+            // Create an array to hold all defects to be sent in one request
+            const defectEntries = [];
+
+            // Loop through selected defects
             for (const checkpointId in selectedDefects) {
-              const selectedOptions = selectedDefects[checkpointId];
-              for (const defect of selectedOptions) {
-                const CheckpointDefectList = {
-                  Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
-                  Defect_Name: defect.value,
-                  Line_Name: param.line,
-                  Station_Name: param.station,
-                  Operator_Name: selectedAuditor.value,
-                  Status: defectStatuses[checkpointId],
-                  Remark: checkpointId,
-                  Shift_Name: 'A',
-                  Username: '',
-                };
+              const { checkpointId: id, checkpointName } = selectedDefects[checkpointId];
 
-                const response = await axios.post(
-                  `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
-                    JSON.stringify(CheckpointDefectList)
-                  )}&Serial_Number=${chassisNumber}`,
+              // Create an entry for each selected defect
+              const CheckpointDefectList = {
+                Checkpoint_Name: checkpointName,
+                Defect_Name: id, // Assuming defect name is stored in checkpointId, adjust if necessary
+                Line_Name: param.line,
+                Station_Name: param.station,
+                Operator_Name: selectedAuditor.value,
+                Status: 'nok', // Since we are sending "Not OK" defects
+                Remark: checkpointId,
+                Shift_Name: 'A',
+                Username: '', // Add username if needed
+              };
 
-                  {
-                    auth: {
-                      username: 'arun',
-                      password: '123456',
-                    },
-                  }
-                );
+              defectEntries.push(CheckpointDefectList);
+            }
 
-                if (response.status === 200) {
-                  toast.success(`Defect ${defect.value} for checkpoint ${checkpointId} saved successfully!`);
-                } else {
-                  toast.error(`Failed to save defect ${defect.value} for checkpoint ${checkpointId}`);
-                }
+            // Send all defects in a single API request
+            const response = await axios.post(
+              `http://10.119.1.101:9898/rest/api/saveCheckpointDefects`,
+              {
+                CheckpointDefectList: defectEntries,
+                Serial_Number: chassisNumber,
+              },
+              {
+                auth: {
+                  username: 'arun',
+                  password: '123456',
+                },
               }
+            );
+
+            if (response.status === 200) {
+              toast.success(`Defects saved successfully!`);
+            } else {
+              toast.error(`Failed to save defects.`);
             }
           } catch (error) {
             toast.error('Error saving defects:', error);
@@ -343,7 +352,7 @@ export const PostRolloutComponent = ({ param }) => {
         toast.error('Please select operator name');
       }
     } else {
-      toast.error('please enter chassis number');
+      toast.error('Please enter chassis number');
     }
   };
 
@@ -364,67 +373,93 @@ export const PostRolloutComponent = ({ param }) => {
     setModalVisible(true);
   };
 
-  const handleStatusChange = async (checkpointId, value) => {
+  //   const handleStatusChange = async (checkpointId, value) => {
+  //     setDefectStatuses((prev) => ({
+  //       ...prev,
+  //       [checkpointId]: value,
+  //     }));
+
+  //     console.log(defectStatuses, checkpointId, value);
+  //     if (value === 'nok') {
+  //       try {
+  //         // const response = await axios.get(
+  //         //   `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
+  //         // );
+
+  //         // Group defects based on Checkpoint_Id
+  //         const defectsForCheckpoint = defectStatuses.reduce((acc, defect) => {
+  //           const checkpointId = defect.Checkpoint_Id;
+
+  //           console.log(defectsForCheckpoint);
+
+  //           // Initialize an empty array if checkpointId is not already in acc
+  //           if (!acc[checkpointId]) {
+  //             acc[checkpointId] = [];
+  //           }
+
+  //           // Add defect to the corresponding checkpointId array
+  //           acc[checkpointId].push({
+  //             value: defect.Defect_Name,
+  //             label: defect.Defect_Name,
+  //           });
+
+  //           return acc;
+  //         }, {});
+
+  //         // Merge new defects with the existing state
+  //         setDefectOptions((prev) => ({
+  //           ...prev,
+  //           ...defectsForCheckpoint,
+  //         }));
+  //       } catch (error) {
+  //         console.error('Error fetching defects:', error);
+  //       }
+  //     }
+
+  //     //==================================================
+
+  //     if (value === 'ok') {
+  //       try {
+  //         setSelectedDefects((prev) => {
+  //           const updatedDefects = { ...prev };
+  //           delete updatedDefects[checkpointId]; // Remove defects for this checkpoint
+  //           return updatedDefects;
+  //         });
+  //       } catch (error) {
+  //         console.error('Error fetching defects:', error);
+  //       }
+  //     }
+  //   };
+
+  const handleStatusChange = (checkpointId, value, checkpointName) => {
     setDefectStatuses((prev) => ({
       ...prev,
       [checkpointId]: value,
     }));
 
-    // Fetch defects only if "NOK" is selected
+    console.log(defectStatuses, checkpointId, value);
+
     if (value === 'nok') {
-      try {
-        const response = await axios.get(
-          `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
-        );
+      const defectEntry = {
+        checkpointId,
+        checkpointName,
+        value,
+      };
 
-        // Group defects based on Checkpoint_Id
-        const defectsForCheckpoint = response.data['Checkpoint Defect_List'].reduce((acc, defect) => {
-          const checkpointId = defect.Checkpoint_Id;
-
-          // Initialize an empty array if checkpointId is not already in acc
-          if (!acc[checkpointId]) {
-            acc[checkpointId] = [];
-          }
-
-          // Add defect to the corresponding checkpointId array
-          acc[checkpointId].push({
-            value: defect.Defect_Name,
-            label: defect.Defect_Name,
-          });
-
-          return acc;
-        }, {});
-
-        // Merge new defects with the existing state
-        setDefectOptions((prev) => ({
-          ...prev,
-          ...defectsForCheckpoint,
-        }));
-      } catch (error) {
-        console.error('Error fetching defects:', error);
-      }
+      // Update selected defects for this checkpoint
+      setSelectedDefects((prev) => ({
+        ...prev,
+        [checkpointId]: defectEntry, // Store the defect entry
+      }));
     }
-
-    //==================================================
 
     if (value === 'ok') {
-      try {
-        setSelectedDefects((prev) => {
-          const updatedDefects = { ...prev };
-          delete updatedDefects[checkpointId]; // Remove defects for this checkpoint
-          return updatedDefects;
-        });
-      } catch (error) {
-        console.error('Error fetching defects:', error);
-      }
+      setSelectedDefects((prev) => {
+        const updatedDefects = { ...prev };
+        delete updatedDefects[checkpointId];
+        return updatedDefects;
+      });
     }
-  };
-
-  const handleSelectedDefects = (checkpointId, selectedOption) => {
-    setSelectedDefects((prev) => ({
-      ...prev,
-      [checkpointId]: selectedOption,
-    }));
   };
 
   const closeModal = () => {
@@ -546,7 +581,7 @@ export const PostRolloutComponent = ({ param }) => {
               <label htmlFor="series" className="form-label fw-bold m-0">
                 Model Desc
               </label>
-              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Model_Desc} disabled={true} />
+              <input type="text" id="series" className="form-control disabled-input" value={serialInfo.Part_Description} disabled={true} />
             </div>
           </div>
           <div className="col-12 row">
@@ -707,8 +742,6 @@ export const PostRolloutComponent = ({ param }) => {
                   <tr>
                     <th className="bg-primary text-white">CHECK POINT</th>
                     <th className="bg-primary text-white">ACTION TAKEN</th>
-                    <th className="bg-primary text-white">ADDITIONAL DEFECT</th>
-                    <th className="bg-primary text-white">INSP. METHOD</th>
                     <th className="bg-primary text-white">REMARKS</th>
                   </tr>
                 </thead>
@@ -742,19 +775,7 @@ export const PostRolloutComponent = ({ param }) => {
                           </div>
                         </div>
                       </td>
-                      <td className="align-middle">
-                        <Select
-                          options={defectOptions[checkpoint.Checkpoint_Id] || []} // Use defects for this specific checkpoint
-                          placeholder="Select Defects"
-                          isClearable
-                          isDisabled={defectStatuses[checkpoint.Checkpoint_Id] !== 'nok'} // Disable when status is not "NOK"
-                          styles={reactSelectPopupStyles}
-                          isMulti
-                          onChange={(selectedOption) => handleSelectedDefects(checkpoint.Checkpoint_Id, selectedOption)}
-                          value={selectedDefects[checkpoint.Checkpoint_Id] || null} // Select the option based on the selected state
-                        />
-                      </td>
-                      <td className="align-middle">{checkpoint.Inspection_Method}</td>
+
                       <td className="align-middle">
                         <CFormInput type="text" placeholder="Add Remarks" />
                       </td>

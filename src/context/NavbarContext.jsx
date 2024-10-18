@@ -7,7 +7,10 @@ export const NavbarContext = createContext();
 export const NavbarProvider = ({ children }) => {
   const [navbarData, setNavbarData] = useState(null);
 
-  return <NavbarContext.Provider value={{ navbarData, setNavbarData }}>{children}</NavbarContext.Provider>;
+  const resetNavbarData = () => {
+    setNavbarData(null); // Reset navbar data
+  };
+  return <NavbarContext.Provider value={{ navbarData, setNavbarData, resetNavbarData }}>{children}</NavbarContext.Provider>;
 };
 
 export const useNavbar = () => useContext(NavbarContext);

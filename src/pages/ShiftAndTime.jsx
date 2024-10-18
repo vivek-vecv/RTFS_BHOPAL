@@ -1,29 +1,25 @@
-import { useState, useEffect } from "react";
+export const ShiftAndTime = () => {
+  const now = new Date();
+  const hours = now.getHours();
+  const minutes = now.getMinutes();
+  const totalMinutes = hours * 60 + minutes;
 
-function ShiftAndTime() {
-  const [shift, setShift] = useState("");
-  const [currentTime, setCurrentTime] = useState("");
+  const shiftAStart = 8 * 60; // 08:00 AM
+  const shiftAEnd = 16 * 60 + 30; // 16:30 PM
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      // console.log("password", headers);
-      const now = new Date();
-      const hours = now.getHours();
-      const minutes = now.getMinutes();
-      const seconds = now.getSeconds();
-      const ampm = hours >= 12 ? "PM" : "AM";
-      const adjustedHours = hours % 12 || 12;
-      const formattedTime = `${now.toLocaleDateString()} ${adjustedHours}:${minutes
-        .toString()
-        .padStart(2, "0")}:${seconds.toString().padStart(2, "0")} ${ampm}`;
-      const shift = hours < 12 ? "A" : hours < 18 ? "B" : "C";
-      setCurrentTime(formattedTime);
-      setShift(shift);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []); // Empty dependency array to run only once when the component mounts
+  const shiftBStart = 16 * 60 + 31; // 16:31 PM
+  const shiftBEnd = 24 * 60 + 1; // 01:00 AM (next day)
 
-  return { currentTime, shift }; // Return the values to be used elsewhere
-}
+  const shiftCStart = 1 * 60 + 1; // 01:01 AM
+  const shiftCEnd = 7 * 60 + 59; // 07:59 AM
 
-export default ShiftAndTime;
+  if (totalMinutes >= shiftAStart && totalMinutes <= shiftAEnd) {
+    return 'A';
+  } else if (totalMinutes >= shiftBStart || totalMinutes <= shiftBEnd) {
+    return 'B';
+  } else if (totalMinutes >= shiftCStart && totalMinutes <= shiftCEnd) {
+    return 'C';
+  } else {
+    return 'Out of defined';
+  }
+};

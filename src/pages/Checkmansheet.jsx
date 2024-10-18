@@ -11,6 +11,7 @@ import { useNavbar } from '../context/NavbarContext.jsx';
 import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
+import { ShiftAndTime } from './ShiftAndTime.jsx';
 const Checkmansheet = () => {
   // const [selectedComponent, setSelectedComponent] = useState(null);
   const [param, setParam] = useState({});
@@ -101,7 +102,6 @@ export const QGComponent = ({ param }) => {
   const [defectStatuses, setDefectStatuses] = useState({});
   const [defectOptions, setDefectOptions] = useState({});
   const [selectedDefects, setSelectedDefects] = useState({});
-  const [geneLoading, setGeneloading] = useState(false);
   const [isTorqueModalVisible, setIsTorqueModalVisible] = useState(false);
   const [torqueData, setTorqueData] = useState([]);
   const [isOpModalOpen, setOpModalOpen] = useState(false);
@@ -115,6 +115,13 @@ export const QGComponent = ({ param }) => {
   };
 
   const emptyModel = () => {
+    const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
+      acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
+      return acc;
+    }, {});
+
+    setDefectStatuses(initialStatuses);
+
     setTotalDefects(0);
     setTotalDemerits(0);
     setChassisNumber('');
@@ -136,19 +143,11 @@ export const QGComponent = ({ param }) => {
       Fert_Code: '',
     });
     setAuditDate('');
-    checkPointData([]);
-
-    const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
-      acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
-      return acc;
-    }, {});
-
-    setDefectStatuses(initialStatuses);
+    setCheckPointData([]);
   };
 
   const handleGenealogy = async () => {
     if (chassisNumber) {
-      setGeneloading(true); // Set loading to true before making the API call
       try {
         const response = await axios.get(
           `http://10.119.1.101:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
@@ -160,11 +159,8 @@ export const QGComponent = ({ param }) => {
           }
         );
         setGenealogyData(response.data.Geneaology_Information);
-        setGeneloading(false);
         setIsModalOpen(true);
       } catch (error) {
-        setGeneloading(false);
-
         toast.error('Error in fetching data ', error);
       }
     } else {
@@ -308,16 +304,17 @@ export const QGComponent = ({ param }) => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    console.log('------------------running-------------------\n');
-
     if (chassisNumber) {
       if (selectedAuditor) {
         if (Object.keys(selectedDefects).length) {
           try {
+            const defectEntries = {
+              checkpointDefectList: [],
+            };
             for (const checkpointId in selectedDefects) {
               const selectedOptions = selectedDefects[checkpointId];
               for (const defect of selectedOptions) {
-                const CheckpointDefectList = {
+                const defectEntry = {
                   Checkpoint_Name: checkPointData.find((cp) => cp.Checkpoint_Id === checkpointId).Checkpoint_Name,
                   Defect_Name: defect.value,
                   Line_Name: param.line,
@@ -325,42 +322,43 @@ export const QGComponent = ({ param }) => {
                   Operator_Name: selectedAuditor.value,
                   Status: defectStatuses[checkpointId],
                   Remark: checkpointId,
-                  Shift_Name: 'A',
-                  Username: '',
+                  Shift_Name: ShiftAndTime(),
+                  Username: 'Quality inspector',
                 };
-
-                const response = await axios.post(
-                  `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
-                    JSON.stringify(CheckpointDefectList)
-                  )}&Serial_Number=${chassisNumber}`,
-
-                  {
-                    auth: {
-                      username: 'arun',
-                      password: '123456',
-                    },
-                  }
-                );
-
-                if (response.status === 200) {
-                  toast.success(`Defect ${defect.value} for checkpoint ${checkpointId} saved successfully!`);
-                } else {
-                  toast.error(`Failed to save defect ${defect.value} for checkpoint ${checkpointId}`);
-                }
+                defectEntries.checkpointDefectList.push(defectEntry);
               }
             }
+            const response = await axios.post(
+              `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+              [defectEntries],
+
+              {
+                auth: {
+                  username: 'arun',
+                  password: '123456',
+                },
+              }
+            );
+
+            if (response.status === 200) {
+              toast.success(`Defect saved successfully ${chassisNumber}`);
+            } else {
+              return toast.error(`Defect not saved ${chassisNumber}`);
+            }
           } catch (error) {
-            toast.error('Error saving defects:', error);
+            console.log('here in submit');
+            return toast.error('Error saving defects:', error);
           }
         } else {
           setConfirmationVisible(true);
         }
       } else {
-        toast.error('Please select operator name');
+        return toast.error('Please select operator name');
       }
     } else {
-      toast.error('please enter chassis number');
+      return toast.error('please enter chassis number');
     }
+    emptyModel();
   };
 
   const reactSelectPopupStyles = {
@@ -457,7 +455,7 @@ export const QGComponent = ({ param }) => {
         Operator_Name: selectedAuditor.value,
         Status: 'All Ok',
         Remark: 'All Ok',
-        Shift_Name: 'A',
+        Shift_Name: ShiftAndTime(),
         Username: 'Vivek',
       };
 
@@ -480,6 +478,7 @@ export const QGComponent = ({ param }) => {
         toast.error(`Failed to save all ok`);
       }
     } catch (error) {
+      console.log('here in confirm');
       toast.error('Error saving defects:', error);
     }
     setConfirmationVisible(false);
@@ -503,7 +502,7 @@ export const QGComponent = ({ param }) => {
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">
           <div className="col-12 row">
-            <div className="col-12 col-sm-6 col-lg-4">
+            <div className="col-12 col-xs-6 col-sm-6 col-lg-4">
               <label htmlFor="chassisNumber" className="form-label fw-bold m-0">
                 Chassis Number
               </label>
@@ -531,7 +530,7 @@ export const QGComponent = ({ param }) => {
                 </CModalBody>
               </CModal>
             </div>
-            <div className="col-12 col-sm-3 col-lg-4">
+            <div className="col-12 col-xs-6 col-sm-3 col-lg-4">
               <label htmlFor="engineNumber" className="form-label fw-bold m-0">
                 Fert Code
               </label>
