@@ -11,6 +11,7 @@ import { useNavbar } from '../context/NavbarContext.jsx';
 import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
+import { ShiftAndTime } from './ShiftAndTime.jsx';
 
 const PostRollout = () => {
   const [param, setParam] = useState({});
@@ -101,6 +102,12 @@ export const PostRolloutComponent = ({ param }) => {
   };
 
   const emptyModel = () => {
+    const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
+      acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
+      return acc;
+    }, {});
+
+    setDefectStatuses(initialStatuses);
     setTotalDefects(0);
     setTotalDemerits(0);
     setChassisNumber('');
@@ -122,14 +129,7 @@ export const PostRolloutComponent = ({ param }) => {
       Fert_Code: '',
     });
     setAuditDate('');
-    checkPointData([]);
-
-    const initialStatuses = checkPointData.reduce((acc, checkpoint) => {
-      acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
-      return acc;
-    }, {});
-
-    setDefectStatuses(initialStatuses);
+    setCheckPointData([]);
   };
 
   const handleGenealogy = async () => {
@@ -308,14 +308,14 @@ export const PostRolloutComponent = ({ param }) => {
 
               // Create an entry for each selected defect
               const CheckpointDefectList = {
+                Checkpoint_ID: id,
                 Checkpoint_Name: checkpointName,
-                Defect_Name: id, // Assuming defect name is stored in checkpointId, adjust if necessary
+                Station_Name: param.station, // Assuming defect name is stored in checkpointId, adjust if necessary
                 Line_Name: param.line,
-                Station_Name: param.station,
                 Operator_Name: selectedAuditor.value,
                 Status: 'nok', // Since we are sending "Not OK" defects
                 Remark: checkpointId,
-                Shift_Name: 'A',
+                Shift_Name: ShiftAndTime(),
                 Username: '', // Add username if needed
               };
 
@@ -324,11 +324,12 @@ export const PostRolloutComponent = ({ param }) => {
 
             // Send all defects in a single API request
             const response = await axios.post(
-              `http://10.119.1.101:9898/rest/api/saveCheckpointDefects`,
-              {
-                CheckpointDefectList: defectEntries,
-                Serial_Number: chassisNumber,
-              },
+              `http://10.119.1.101:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
+              [
+                {
+                  checkpointList: defectEntries,
+                },
+              ],
               {
                 auth: {
                   username: 'arun',
@@ -340,20 +341,21 @@ export const PostRolloutComponent = ({ param }) => {
             if (response.status === 200) {
               toast.success(`Defects saved successfully!`);
             } else {
-              toast.error(`Failed to save defects.`);
+              return toast.error(`Failed to save defects.`);
             }
           } catch (error) {
-            toast.error('Error saving defects:', error);
+            return toast.error('Error saving defects:', error);
           }
         } else {
           setConfirmationVisible(true);
         }
       } else {
-        toast.error('Please select operator name');
+        return toast.error('Please select operator name');
       }
     } else {
-      toast.error('Please enter chassis number');
+      return toast.error('Please enter chassis number');
     }
+    emptyModel();
   };
 
   const reactSelectPopupStyles = {
@@ -437,8 +439,6 @@ export const PostRolloutComponent = ({ param }) => {
       [checkpointId]: value,
     }));
 
-    console.log(defectStatuses, checkpointId, value);
-
     if (value === 'nok') {
       const defectEntry = {
         checkpointId,
@@ -468,6 +468,7 @@ export const PostRolloutComponent = ({ param }) => {
 
   const handleConfirm = async () => {
     try {
+      const defectEntries = [];
       const CheckpointDefectList = {
         Checkpoint_Name: '',
         Defect_Name: '',
@@ -476,14 +477,19 @@ export const PostRolloutComponent = ({ param }) => {
         Operator_Name: selectedAuditor.value,
         Status: 'All Ok',
         Remark: 'All Ok',
-        Shift_Name: 'A',
+        Shift_Name: ShiftAndTime,
         Username: 'Vivek',
       };
 
+      defectEntries.push(CheckpointDefectList);
+
       const response = await axios.post(
-        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
-          JSON.stringify(CheckpointDefectList)
-        )}&Serial_Number=${chassisNumber}`,
+        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+        [
+          {
+            checkpointList: defectEntries,
+          },
+        ],
         {
           auth: {
             username: 'arun',
@@ -496,10 +502,10 @@ export const PostRolloutComponent = ({ param }) => {
         toast.success(`All OK saved successfully!`);
         emptyModel();
       } else {
-        toast.error(`Failed to save all ok`);
+        return toast.error(`Failed to save all ok`);
       }
     } catch (error) {
-      toast.error('Error saving defects:', error);
+      return toast.error('Error saving defects:', error);
     }
     setConfirmationVisible(false);
   };

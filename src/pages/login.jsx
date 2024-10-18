@@ -1,16 +1,47 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { useAuth } from './AuthContext.jsx';
 import vehicleImage from '../images/transparent.png';
 import { CForm, CFormLabel, CFormInput, CButton, CAlert } from '@coreui/react';
 import axios from 'axios';
+import { useAuth } from './AuthContext.jsx';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  // const { login, heading } = useAuth();
+  const { login, user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/login?username=${username}&password=${password}`, {
+        username,
+        password,
+      });
+      if (response.data.Info === 'Login successful') {
+        toast.success(response.data.Info);
+        const userData = {
+          username,
+          roles: response.data.User_roles.map((role) => role.Role.trim()),
+        };
+        console.log(userData);
+        login(userData);
+        // navigate('/');
+      } else {
+        setError('incorrect username or password');
+      }
+    } catch (error) {
+      setError('Login failed. Please try again.', error);
+    }
+  };
 
   return (
     <div className="container-fluid">
@@ -19,10 +50,9 @@ const LoginPage = () => {
         style={{
           marginTop: '80px',
           background: `url(${vehicleImage})`,
-          backgroundSize: 'contain', // Ensures the image covers the div
+          backgroundSize: 'contain',
           backgroundPosition: 'left',
-          backgroundRepeat: 'no-repeat', // Prevents repeating the image
-          // height: '50vh', // Adjust height as needed
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <div className="ms-auto p-4 login-box rounded-end-5  bg-secondary bg-opacity-25 ">
@@ -58,7 +88,7 @@ const LoginPage = () => {
               />
             </div>
 
-            <CButton type="submit" className="btn btn-primary w-100">
+            <CButton type="submit" className="btn btn-primary w-100" onClick={handleLogin}>
               Login
             </CButton>
           </CForm>

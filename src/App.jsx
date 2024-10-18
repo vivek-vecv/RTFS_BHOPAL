@@ -15,10 +15,8 @@ import PostRolloutComponent from './pages/PostRollout.jsx';
 
 const App = () => {
   return (
-    // <AuthProvider>
-    <>
+    <AuthProvider>
       <Toaster />
-
       <Router>
         <NavbarProvider>
           <Navbar />
@@ -28,41 +26,40 @@ const App = () => {
             <Route
               path="/pdi"
               element={
-                // <ProtectedRoute>
-                <PDIComponent />
-                // </ProtectedRoute>
+                <ProtectedRoute>
+                  <PDIComponent />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/pag"
               element={
-                // <ProtectedRoute>
-                <PAGComponent />
-                // </ProtectedRoute>
+                <ProtectedRoute>
+                  <PAGComponent />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/qg"
               element={
-                // <ProtectedRoute>
-                <QGComponent />
-                // </ProtectedRoute>
+                <ProtectedRoute>
+                  <QGComponent />
+                </ProtectedRoute>
               }
             />
             <Route
               path="/pr"
               element={
-                // <ProtectedRoute>
-                <PostRolloutComponent />
-                // </ProtectedRoute>
+                <ProtectedRoute>
+                  <PostRolloutComponent />
+                </ProtectedRoute>
               }
             />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>
         </NavbarProvider>
       </Router>
-    </>
-    // </AuthProvider>
+    </AuthProvider>
   );
 };
 

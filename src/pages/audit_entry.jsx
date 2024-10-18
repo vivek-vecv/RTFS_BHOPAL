@@ -323,6 +323,11 @@ const AuditEntry = () => {
       return;
     }
 
+    if (!auditorOptions.value) {
+      toast.error('Please select auditor name.');
+      return;
+    }
+
     try {
       let status;
       if (tableEntries.length === 0) {

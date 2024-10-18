@@ -323,7 +323,7 @@ export const QGComponent = ({ param }) => {
                   Status: defectStatuses[checkpointId],
                   Remark: checkpointId,
                   Shift_Name: ShiftAndTime(),
-                  Username: 'Quality inspector',
+                  Username: 'Vivek',
                 };
                 defectEntries.checkpointDefectList.push(defectEntry);
               }
