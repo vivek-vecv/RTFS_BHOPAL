@@ -9,6 +9,7 @@ import { FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { BsQrCode } from 'react-icons/bs';
 import BarcodeScanner from './BarcodeScanner.jsx';
+import DatePickerCustom from './DatePickerCustom.jsx';
 const AuditEntry = () => {
   const [process, setProcess] = useState('static');
   const [loading, setLoading] = useState(false);
@@ -323,7 +324,7 @@ const AuditEntry = () => {
       return;
     }
 
-    if (!auditorOptions.value) {
+    if (!selectedAuditor.value) {
       toast.error('Please select auditor name.');
       return;
     }
@@ -548,19 +549,7 @@ const AuditEntry = () => {
                 Audit Date
               </label>
               <div>
-                <DatePicker
-                  selected={auditDate}
-                  onChange={(date) => setAuditDate(date)}
-                  showTimeSelect
-                  disabled={!chassisNumber}
-                  className="form-control w-100"
-                  dateFormat="Pp"
-                  timeFormat="HH:mm"
-                  timeIntervals={1}
-                  timeCaption="Time"
-                  dateFormatCalendar="MMMM"
-                  placeholderText="Select date and time"
-                />
+                <DatePickerCustom auditDate={auditDate} setAuditDate={setAuditDate} chassisNumber={chassisNumber} />
               </div>
             </div>
             <div className="col-12 col-sm-6">

@@ -32,9 +32,8 @@ const LoginPage = () => {
           username,
           roles: response.data.User_roles.map((role) => role.Role.trim()),
         };
-        console.log(userData);
         login(userData);
-        // navigate('/');
+        navigate(localStorage.getItem('intendedRoute'));
       } else {
         setError('incorrect username or password');
       }
@@ -57,7 +56,7 @@ const LoginPage = () => {
       >
         <div className="ms-auto p-4 login-box rounded-end-5  bg-secondary bg-opacity-25 ">
           <h3 className="text-center fw-bold">Login</h3>
-          <CForm onSubmit={''} className="p-4 gap-4 d-flex flex-column my-auto">
+          <CForm onSubmit={handleLogin} className="p-4 gap-4 d-flex flex-column my-auto">
             <div className="form-group">
               <CFormLabel htmlFor="username" className="fw-bold m-0">
                 Username

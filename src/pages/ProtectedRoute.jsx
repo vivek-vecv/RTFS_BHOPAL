@@ -4,6 +4,10 @@ import { useAuth } from './AuthContext';
 const ProtectedRoute = ({ children }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const intendedRoute = location.pathname;
+  console.log(intendedRoute);
+
+  localStorage.setItem('intendedRoute', intendedRoute);
 
   const allowedRoutes = {
     admin: ['/', '/pdi', '/pag', '/qg', '/pr'],

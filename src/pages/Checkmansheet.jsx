@@ -342,6 +342,7 @@ export const QGComponent = ({ param }) => {
 
             if (response.status === 200) {
               toast.success(`Defect saved successfully ${chassisNumber}`);
+              emptyModel();
             } else {
               return toast.error(`Defect not saved ${chassisNumber}`);
             }
@@ -358,7 +359,6 @@ export const QGComponent = ({ param }) => {
     } else {
       return toast.error('please enter chassis number');
     }
-    emptyModel();
   };
 
   const reactSelectPopupStyles = {
@@ -447,7 +447,10 @@ export const QGComponent = ({ param }) => {
 
   const handleConfirm = async () => {
     try {
-      const CheckpointDefectList = {
+      const defectEntries = {
+        checkpointDefectList: [],
+      };
+      const defectEntry = {
         Checkpoint_Name: '',
         Defect_Name: '',
         Line_Name: param.line,
@@ -458,11 +461,10 @@ export const QGComponent = ({ param }) => {
         Shift_Name: ShiftAndTime(),
         Username: 'Vivek',
       };
-
+      defectEntries.checkpointDefectList.push(defectEntry);
       const response = await axios.post(
-        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?CheckpointDefectList=${encodeURIComponent(
-          JSON.stringify(CheckpointDefectList)
-        )}&Serial_Number=${chassisNumber}`,
+        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+        [defectEntries],
         {
           auth: {
             username: 'arun',
@@ -591,26 +593,6 @@ export const QGComponent = ({ param }) => {
             </div>
           </div>
           <div className="col-12 col-md-6 row">
-            <div className="col-12 col-sm-6 col-md-6">
-              <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
-                Inspection Date
-              </label>
-              <div>
-                <DatePicker
-                  selected={auditDate}
-                  onChange={(date) => setAuditDate(date)}
-                  showTimeSelect
-                  disabled={!chassisNumber}
-                  className="form-control w-100"
-                  dateFormat="Pp"
-                  timeFormat="HH:mm"
-                  timeIntervals={1}
-                  timeCaption="Time"
-                  dateFormatCalendar="MMMM"
-                  placeholderText="Select date and time"
-                />
-              </div>
-            </div>
             <div className="col-12 col-sm-6 col-md-6">
               <label htmlFor="inspectorName" className="form-label fw-bold m-0">
                 Operator Name

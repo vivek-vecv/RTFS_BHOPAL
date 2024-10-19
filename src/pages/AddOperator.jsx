@@ -20,8 +20,6 @@ const AddOperator = ({ isVisible, station, shift, onClose, fetchAuditors }) => {
           },
         }
       );
-      console.log('------------------response-------------------\n', response);
-
       if (response.status === 200) {
         toast.success('Operator added successfully');
         onClose(); // Close the modal after success

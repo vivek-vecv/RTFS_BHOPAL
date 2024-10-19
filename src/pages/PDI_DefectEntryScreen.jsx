@@ -9,6 +9,7 @@ import { toast } from 'react-toastify';
 import BarcodeScanner from './BarcodeScanner.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
 import { BsQrCode } from 'react-icons/bs';
+import DatePickerCustom from './DatePickerCustom.jsx';
 const PDI_DefectEntryScreen = () => {
   const [process, setProcess] = useState('static');
   const [modalVisible, setModalVisible] = useState(false);
@@ -543,19 +544,7 @@ const PDI_DefectEntryScreen = () => {
                 Audit Date
               </label>
               <div>
-                <DatePicker
-                  selected={auditDate}
-                  onChange={(date) => setAuditDate(date)}
-                  showTimeSelect
-                  disabled={!chassisNumber}
-                  className="form-control w-100"
-                  dateFormat="Pp"
-                  timeFormat="HH:mm"
-                  timeIntervals={1}
-                  timeCaption="Time"
-                  dateFormatCalendar="MMMM"
-                  placeholderText="Select date and time"
-                />
+                <DatePickerCustom auditDate={auditDate} setAuditDate={setAuditDate} chassisNumber={chassisNumber} />
               </div>
             </div>
             <div className="col-12 col-sm-6">

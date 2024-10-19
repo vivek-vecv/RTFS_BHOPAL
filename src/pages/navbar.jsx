@@ -1,4 +1,4 @@
-import { CButton, CNavbar, CNavbarBrand, CTooltip } from '@coreui/react';
+import { CButton, CNavbar, CNavbarBrand } from '@coreui/react';
 import logo from '../images/logo1.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNavbar } from '../context/NavbarContext.jsx';
@@ -17,19 +17,18 @@ const Navbar = () => {
   };
 
   const location = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem('intendedRoute');
     navigate('/');
   };
 
   const handleHomePage = () => {
-    logout();
     navigate('/');
   };
-
   useEffect(() => {
     resetNavbarData();
   }, [location]);
@@ -53,13 +52,12 @@ const Navbar = () => {
       <div>
         <span className="fw-bold mx-4">Shift: {<ShiftAndTime />}</span>
       </div>
-      {!(pathname == '/') && (
+      {user && (
         <div>
-          <CTooltip content="Logout" placement="left">
-            <CButton onClick={handleLogout} color="danger" className="mx-1">
-              <FaSignOutAlt color="white" />
-            </CButton>
-          </CTooltip>
+          <CButton onClick={handleLogout} color="danger" title="Logout" data-bs-toggle="tooltip" className="mx-1">
+            <FaSignOutAlt color="white" />
+            <span className="text-white fw-bold mx-1">{user.username}</span>
+          </CButton>
         </div>
       )}
     </CNavbar>

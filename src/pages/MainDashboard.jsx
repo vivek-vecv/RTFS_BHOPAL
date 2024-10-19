@@ -1,4 +1,4 @@
-import { CButton, CCarousel, CCarouselItem, CImage } from '@coreui/react';
+import { CCarousel, CCarouselItem, CImage } from '@coreui/react';
 import image1 from './../images/homepage_slides.gif';
 import { Link } from 'react-router-dom';
 
@@ -20,17 +20,17 @@ export default function MainDashboard() {
         </CCarousel>
         {/* Buttons Section */}
         <div className="d-flex gap-5 my-4 justify-content-center flex-wrap mt-5">
-          <Link to="/pag">
-            <CButton className="btn btn-primary py-2 px-4">Product Audit</CButton>
+          <Link to="/pag" className="btn btn-primary py-2 px-4">
+            Product Audit
           </Link>
-          <Link to="/pdi">
-            <CButton className="btn btn-primary py-2 px-4">PDI Check</CButton>
+          <Link to="/pdi" className="btn btn-primary py-2 px-4">
+            PDI Check
           </Link>
-          <Link to="/qg">
-            <CButton className="btn btn-primary py-2 px-4">Quality Gates</CButton>
+          <Link to="/qg" className="btn btn-primary py-2 px-4">
+            Quality Gates
           </Link>
-          <Link to="/pr">
-            <CButton className="btn btn-primary py-2 px-4">Post Rollout</CButton>
+          <Link to="/pr" className="btn btn-primary py-2 px-4">
+            Post Rollout
           </Link>
         </div>
       </div>

@@ -12,6 +12,7 @@ import AddOperator from './AddOperator.jsx';
 import TorqueModal from './TorqueModal.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
 import { ShiftAndTime } from './ShiftAndTime.jsx';
+import DatePickerCustom from './DatePickerCustom.jsx';
 
 const PostRollout = () => {
   const [param, setParam] = useState({});
@@ -85,7 +86,7 @@ export const PostRolloutComponent = ({ param }) => {
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
   const [auditDate, setAuditDate] = useState('');
-  const [defectStatuses, setDefectStatuses] = useState({});
+  const [checkpointStatus, setCheckpointStatus] = useState({});
   const [defectOptions, setDefectOptions] = useState({});
   const [selectedDefects, setSelectedDefects] = useState({});
   const [geneLoading, setGeneloading] = useState(false);
@@ -107,7 +108,7 @@ export const PostRolloutComponent = ({ param }) => {
       return acc;
     }, {});
 
-    setDefectStatuses(initialStatuses);
+    setCheckpointStatus(initialStatuses);
     setTotalDefects(0);
     setTotalDemerits(0);
     setChassisNumber('');
@@ -124,7 +125,7 @@ export const PostRolloutComponent = ({ param }) => {
       Serial_Number: '',
       Shift: '',
       Order_Number: '',
-      Model_Desc: '',
+      Part_Description: '',
       Halb_Code: '',
       Fert_Code: '',
     });
@@ -216,7 +217,7 @@ export const PostRolloutComponent = ({ param }) => {
           acc[checkpoint.Checkpoint_Id] = 'ok'; // Default status is 'ok'
           return acc;
         }, {});
-        setDefectStatuses(initialStatuses);
+        setCheckpointStatus(initialStatuses);
         return serialInformation.Serial_Number;
       }
     } catch (error) {
@@ -294,35 +295,30 @@ export const PostRolloutComponent = ({ param }) => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    console.log(selectedDefects);
     if (chassisNumber) {
       if (selectedAuditor) {
         if (Object.keys(selectedDefects).length) {
           try {
-            // Create an array to hold all defects to be sent in one request
             const defectEntries = [];
 
-            // Loop through selected defects
             for (const checkpointId in selectedDefects) {
               const { checkpointId: id, checkpointName } = selectedDefects[checkpointId];
 
-              // Create an entry for each selected defect
               const CheckpointDefectList = {
                 Checkpoint_ID: id,
                 Checkpoint_Name: checkpointName,
-                Station_Name: param.station, // Assuming defect name is stored in checkpointId, adjust if necessary
+                Station_Name: param.station,
                 Line_Name: param.line,
                 Operator_Name: selectedAuditor.value,
-                Status: 'nok', // Since we are sending "Not OK" defects
+                Status: 'nok',
                 Remark: checkpointId,
                 Shift_Name: ShiftAndTime(),
-                Username: '', // Add username if needed
+                Username: '',
               };
 
               defectEntries.push(CheckpointDefectList);
             }
 
-            // Send all defects in a single API request
             const response = await axios.post(
               `http://10.119.1.101:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
               [
@@ -340,11 +336,12 @@ export const PostRolloutComponent = ({ param }) => {
 
             if (response.status === 200) {
               toast.success(`Defects saved successfully!`);
+              emptyModel();
             } else {
               return toast.error(`Failed to save defects.`);
             }
           } catch (error) {
-            return toast.error('Error saving defects:', error);
+            return toast.error('Error saving defects.');
           }
         } else {
           setConfirmationVisible(true);
@@ -355,20 +352,18 @@ export const PostRolloutComponent = ({ param }) => {
     } else {
       return toast.error('Please enter chassis number');
     }
-    emptyModel();
   };
 
   const reactSelectPopupStyles = {
     menu: (provided) => ({
       ...provided,
-      zIndex: 10000, // Adjust this value as needed
+      zIndex: 10000,
     }),
   };
 
-  // Function to handle scanned value
   const handleScan = (value) => {
     setChassisNumber(value);
-    setModalVisible(false); // Set the scanned value in input field
+    setModalVisible(false);
     fetchChassisNumber(value);
   };
   const handleQrClick = () => {
@@ -376,12 +371,12 @@ export const PostRolloutComponent = ({ param }) => {
   };
 
   //   const handleStatusChange = async (checkpointId, value) => {
-  //     setDefectStatuses((prev) => ({
+  //     setCheckpointStatus((prev) => ({
   //       ...prev,
   //       [checkpointId]: value,
   //     }));
 
-  //     console.log(defectStatuses, checkpointId, value);
+  //     console.log(checkpointStatus, checkpointId, value);
   //     if (value === 'nok') {
   //       try {
   //         // const response = await axios.get(
@@ -389,7 +384,7 @@ export const PostRolloutComponent = ({ param }) => {
   //         // );
 
   //         // Group defects based on Checkpoint_Id
-  //         const defectsForCheckpoint = defectStatuses.reduce((acc, defect) => {
+  //         const defectsForCheckpoint = checkpointStatus.reduce((acc, defect) => {
   //           const checkpointId = defect.Checkpoint_Id;
 
   //           console.log(defectsForCheckpoint);
@@ -434,7 +429,7 @@ export const PostRolloutComponent = ({ param }) => {
   //   };
 
   const handleStatusChange = (checkpointId, value, checkpointName) => {
-    setDefectStatuses((prev) => ({
+    setCheckpointStatus((prev) => ({
       ...prev,
       [checkpointId]: value,
     }));
@@ -470,21 +465,20 @@ export const PostRolloutComponent = ({ param }) => {
     try {
       const defectEntries = [];
       const CheckpointDefectList = {
+        Checkpoint_ID: '',
         Checkpoint_Name: '',
-        Defect_Name: '',
-        Line_Name: param.line,
         Station_Name: param.station,
+        Line_Name: param.line,
         Operator_Name: selectedAuditor.value,
         Status: 'All Ok',
         Remark: 'All Ok',
-        Shift_Name: ShiftAndTime,
-        Username: 'Vivek',
+        Shift_Name: ShiftAndTime(),
+        Username: '',
       };
-
       defectEntries.push(CheckpointDefectList);
 
       const response = await axios.post(
-        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+        `http://10.119.1.101:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
         [
           {
             checkpointList: defectEntries,
@@ -500,20 +494,23 @@ export const PostRolloutComponent = ({ param }) => {
 
       if (response.status === 200) {
         toast.success(`All OK saved successfully!`);
+        setConfirmationVisible(false);
         emptyModel();
       } else {
+        setConfirmationVisible(false);
         return toast.error(`Failed to save all ok`);
       }
     } catch (error) {
+      setConfirmationVisible(false);
       return toast.error('Error saving defects:', error);
     }
-    setConfirmationVisible(false);
   };
 
   const handleCancel = () => {
     setConfirmationVisible(false);
   };
 
+  console.log('---------------Running------------------', checkpointStatus);
   return (
     <>
       {dataFetchLoading ? (
@@ -622,19 +619,7 @@ export const PostRolloutComponent = ({ param }) => {
                 Inspection Date
               </label>
               <div>
-                <DatePicker
-                  selected={auditDate}
-                  onChange={(date) => setAuditDate(date)}
-                  showTimeSelect
-                  disabled={!chassisNumber}
-                  className="form-control w-100"
-                  dateFormat="Pp"
-                  timeFormat="HH:mm"
-                  timeIntervals={1}
-                  timeCaption="Time"
-                  dateFormatCalendar="MMMM"
-                  placeholderText="Select date and time"
-                />
+                <DatePickerCustom auditDate={auditDate} setAuditDate={setAuditDate} chassisNumber={chassisNumber} />
               </div>
             </div>
             <div className="col-12 col-sm-6 col-md-6">
@@ -718,9 +703,9 @@ export const PostRolloutComponent = ({ param }) => {
           )}
           <AddOperator
             isVisible={isOpModalOpen}
-            station={'POST_ROLLOUT'}
+            station={param.station}
             fetchAuditors={fetchAuditors}
-            shift={'A'}
+            shift={ShiftAndTime()}
             onClose={closeoperatorModal}
           />
           <ConfirmationBox
@@ -763,7 +748,7 @@ export const PostRolloutComponent = ({ param }) => {
                               id={`radio-ok-${checkpoint.Checkpoint_Id}`} // Unique ID for the radio button
                               name={`checkpoint-${checkpoint.Checkpoint_Id}`} // Ensure the name matches for grouping
                               value="ok"
-                              checked={defectStatuses[checkpoint.Checkpoint_Id] === 'ok'}
+                              checked={checkpointStatus[checkpoint.Checkpoint_Id] === 'ok'}
                               onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'ok')}
                               label={<span className="text-success fw-bold">OK</span>}
                             />
@@ -774,7 +759,7 @@ export const PostRolloutComponent = ({ param }) => {
                               id={`radio-nok-${checkpoint.Checkpoint_Id}`} // Unique ID for the radio button
                               name={`checkpoint-${checkpoint.Checkpoint_Id}`}
                               value="nok"
-                              checked={defectStatuses[checkpoint.Checkpoint_Id] === 'nok'}
+                              checked={checkpointStatus[checkpoint.Checkpoint_Id] === 'nok'}
                               onChange={() => handleStatusChange(checkpoint.Checkpoint_Id, 'nok', checkpoint.Checkpoint_Name)}
                               label={<span className="text-danger fw-bold">Not OK</span>}
                             />
