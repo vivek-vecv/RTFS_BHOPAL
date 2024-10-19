@@ -375,7 +375,7 @@ const AuditEntry = () => {
             Part_Name: entry.PART,
             Defect_Code: entry.DEFECT_CODE,
             Defect_Desc: entry.DEFECT_DESC,
-            Station: 'PDI',
+            Station: 'PAG',
             Demerit: entry.DEMERIT,
             Tself: entry.TSELF,
             Head: entry.HEAD,
@@ -386,7 +386,7 @@ const AuditEntry = () => {
 
           const serialNumber = chassisNumber;
           setChassisNumber(chassisNumber);
-          const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+          const apiUrl = `http://10.119.1.101:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
           )}&Serial_Number=${serialNumber}`;
 
