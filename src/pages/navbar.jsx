@@ -1,4 +1,4 @@
-import { CButton, CNavbar, CNavbarBrand } from '@coreui/react';
+import { CButton, CNavbar, CNavbarBrand, CTooltip } from '@coreui/react';
 import logo from '../images/logo1.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useNavbar } from '../context/NavbarContext.jsx';
@@ -54,10 +54,16 @@ const Navbar = () => {
       </div>
       {user && (
         <div>
-          <CButton onClick={handleLogout} color="danger" title="Logout" data-bs-toggle="tooltip" className="mx-1">
-            <FaSignOutAlt color="white" />
-            <span className="text-white fw-bold mx-1">{user.username}</span>
-          </CButton>
+          <CTooltip
+            content={<span className="text-dark">Logout</span>}
+            placement="left"
+            style={{ zIndex: '17000', '--cui-tooltip-bg': 'var(--cui-white)' }}
+          >
+            <CButton onClick={handleLogout} color="danger" className="mx-1">
+              <FaSignOutAlt color="white" />
+              <span className="text-white fw-bold mx-1">{user.username}</span>
+            </CButton>
+          </CTooltip>
         </div>
       )}
     </CNavbar>

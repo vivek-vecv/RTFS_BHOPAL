@@ -23,7 +23,7 @@ export default function MainDashboard() {
           <Link to="/pag" className="btn btn-primary py-2 px-4">
             Product Audit
           </Link>
-          <Link to="/pdi" className="btn btn-primary py-2 px-4">
+          <Link to="/pdi" className="btn btn-primary  py-2 px-4">
             PDI Check
           </Link>
           <Link to="/qg" className="btn btn-primary py-2 px-4">

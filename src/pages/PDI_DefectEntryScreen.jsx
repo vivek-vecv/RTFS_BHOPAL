@@ -10,6 +10,8 @@ import BarcodeScanner from './BarcodeScanner.jsx';
 import ConfirmationBox from './ConfirmationBox.jsx';
 import { BsQrCode } from 'react-icons/bs';
 import DatePickerCustom from './DatePickerCustom.jsx';
+import ChassisNumberSelect from './ChassisNumberSelect.jsx';
+import FullPageLoading from '../utils/FullPageLoading.jsx';
 const PDI_DefectEntryScreen = () => {
   const [process, setProcess] = useState('static');
   const [modalVisible, setModalVisible] = useState(false);
@@ -34,7 +36,9 @@ const PDI_DefectEntryScreen = () => {
   const [selectedAuditor, setSelectedAuditor] = useState(null);
   const [totalDefects, setTotalDefects] = useState(0);
   const [totalDemerits, setTotalDemerits] = useState(0);
+  const [resetChassisSelect, setResetChassisSelect] = useState(false);
   const [auditDate, setAuditDate] = useState('');
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [confirmationVisible, setConfirmationVisible] = useState(false);
 
   const emptyModel = () => {
@@ -42,6 +46,7 @@ const PDI_DefectEntryScreen = () => {
     setTotalDemerits(0);
     setChassisNumber('');
     setAuditorOptions([]);
+    setResetChassisSelect((prevState) => !prevState);
     setPartOptions([]);
     setDefectOptions([]);
     setSelectedPart(null);
@@ -56,7 +61,7 @@ const PDI_DefectEntryScreen = () => {
       Serial_Number: '',
       Part_Description: '',
       Order_Number: '',
-      Shift_Name: '',
+      Rollout_Shift: '',
     });
     setSelectedPart(null);
     setAuditDate('');
@@ -78,7 +83,7 @@ const PDI_DefectEntryScreen = () => {
           Model: serialInformation.Model,
           Rollout_Date: serialInformation.Rollout_Date,
           Serial_Number: serialInformation.Serial_Number,
-          Shift_Name: serialInformation.Shift_Name,
+          Rollout_Shift: serialInformation.Rollout_Shift,
           Order_Number: serialInformation.Order_Number,
           Part_Description: serialInformation.Part_Description,
         });
@@ -301,22 +306,34 @@ const PDI_DefectEntryScreen = () => {
   //==============================Submit function code ===================================================
 
   const handleSubmit = async () => {
-    if (chassisNumber) {
-      if (tableEntries.length === 0) {
-        setDefectStatus('All Ok');
-        setConfirmationVisible(true);
-        return;
-      }
+    setSubmitLoading(true);
 
-      await proceedWithSubmission();
-    } else {
+    if (!chassisNumber) {
       toast.error('Please enter chassis to submit.');
+      setSubmitLoading(false);
+      return;
     }
+
+    if (tableEntries.length === 0) {
+      setDefectStatus('All Ok');
+      setConfirmationVisible(true);
+      setSubmitLoading(false);
+      return;
+    }
+
+    await proceedWithSubmission();
   };
 
   const proceedWithSubmission = async () => {
     if (!auditDate) {
       toast.error('Please select inspection date and time.');
+      setSubmitLoading(false);
+      return;
+    }
+
+    if (!selectedAuditor) {
+      toast.error('Please select inspector name.');
+      setSubmitLoading(false);
       return;
     }
 
@@ -334,11 +351,13 @@ const PDI_DefectEntryScreen = () => {
           Demerit: '',
           Tself: '',
           Head: '',
+          Rollout_Shift: serialInfo.Rollout_Shift,
           Aggregate: '',
           Status: defectStatus,
+          Inspector_Name: selectedAuditor.value,
           Audit_Date: auditDate,
         };
-
+        console.log(dataList);
         const serialNumber = chassisNumber;
         setChassisNumber(chassisNumber);
         const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
@@ -366,15 +385,17 @@ const PDI_DefectEntryScreen = () => {
             Part_Name: entry.PART,
             Defect_Code: entry.DEFECT_CODE,
             Defect_Desc: entry.DEFECT_DESC,
+            Rollout_Shift: serialInfo.Rollout_Shift,
             Station: 'PDI',
             Demerit: entry.DEMERIT,
             Tself: entry.TSELF,
             Head: entry.HEAD,
             Aggregate: entry.AGGREGATE,
+            Inspector_Name: selectedAuditor.value,
             Status: defectStatus,
             Audit_Date: auditDate,
           };
-
+          console.log(dataList);
           const serialNumber = chassisNumber;
           setChassisNumber(chassisNumber);
           const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
@@ -399,6 +420,8 @@ const PDI_DefectEntryScreen = () => {
     } catch (error) {
       console.error('Error submitting data:', error);
       setError('Failed to submit data. Please try again.');
+    } finally {
+      setSubmitLoading(false);
     }
   };
 
@@ -409,15 +432,6 @@ const PDI_DefectEntryScreen = () => {
       ...provided,
       zIndex: 10000,
     }),
-  };
-
-  const handleScan = (value) => {
-    setChassisNumber(value);
-    setModalVisible(false);
-    fetchChassisNumber(value);
-  };
-  const handleQrClick = () => {
-    setModalVisible(true);
   };
 
   const handleConfirm = async () => {
@@ -431,14 +445,7 @@ const PDI_DefectEntryScreen = () => {
 
   return (
     <>
-      {dataFetchLoading ? (
-        <div
-          className="position-fixed top-0 d-flex justify-content-center align-items-center vw-100 vh-100 bg-white bg-opacity-75"
-          style={{ zIndex: 15000 }}
-        >
-          <CSpinner className="text-danger mx-auto" />
-        </div>
-      ) : null}
+      <FullPageLoading loading={dataFetchLoading} />
       <div className="container-fluid pt-3">
         {/* 1st Div: 4 divs side by side */}
         <div className="first-section row justify-content-center gap-2">
@@ -447,29 +454,12 @@ const PDI_DefectEntryScreen = () => {
               <label htmlFor="chassisNumber" className="form-label fw-bold m-0">
                 Chassis Number
               </label>
-              <div className="input-group">
-                <input
-                  type="text"
-                  id="chassisNumber"
-                  className="form-control"
-                  placeholder="Enter Chassis Number"
-                  onChange={handleChassisNumberChange}
-                  value={chassisNumber}
-                />
-                <BsQrCode
-                  className="input-group-text p-1"
-                  size={40}
-                  onClick={handleQrClick}
-                  style={{ cursor: 'pointer' }}
-                  color="var(--cui-primary)"
-                />
-                <CModal visible={modalVisible} onClose={() => setModalVisible(false)}>
-                  <CModalHeader className="fw-bold">Scan Bar/QR code</CModalHeader>
-                  <CModalBody className="p-0">
-                    <BarcodeScanner onScan={handleScan} />
-                  </CModalBody>
-                </CModal>
-              </div>
+              <ChassisNumberSelect
+                chassisNumber={chassisNumber}
+                setChassisNumber={setChassisNumber}
+                fetchSerialNumberDetails={fetchSerialNumberDetails}
+                resetSelect={resetChassisSelect}
+              />
             </div>
 
             <div className="col-12 col-sm-6 col-md-4">
@@ -523,7 +513,13 @@ const PDI_DefectEntryScreen = () => {
               <label htmlFor="rolloutShift" className="form-label fw-bold m-0">
                 Rollout Shift
               </label>
-              <input type="text" value={serialInfo.Shift_Name} id="rolloutShift" className="form-control disabled-input" disabled={true} />
+              <input
+                type="text"
+                value={serialInfo.Rollout_Shift}
+                id="rolloutShift"
+                className="form-control disabled-input"
+                disabled={true}
+              />
             </div>
             <div className="col-12 col-sm-2">
               <label htmlFor="totalDefectCount" className="form-label fw-bold m-0">
@@ -610,8 +606,8 @@ const PDI_DefectEntryScreen = () => {
                 <CButton className="btn btn-primary fw-bold" onClick={emptyModel}>
                   Reset
                 </CButton>
-                <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit}>
-                  Submit
+                <CButton className="btn btn-success text-white fw-bold" onClick={handleSubmit} disabled={submitLoading}>
+                  {submitLoading ? <CSpinner size="sm" /> : 'Submit'}
                 </CButton>
               </div>
             </div>

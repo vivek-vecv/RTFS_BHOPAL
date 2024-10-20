@@ -33,3 +33,27 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     /* Optional border radius */
 }
+
+.btn {
+    transform: scale(1);
+}
+
+.btn:hover {
+    animation: scale-down 0.4s ease-in-out;
+}
+
+@keyframes scale-down {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(0.90);
+        /* Scale down */
+    }
+
+    100% {
+        transform: scale(1);
+        /* Return to original size */
+    }
+}
