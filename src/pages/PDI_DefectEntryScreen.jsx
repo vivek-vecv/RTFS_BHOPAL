@@ -67,6 +67,7 @@ const PDI_DefectEntryScreen = () => {
     setAuditDate('');
   };
   const fetchSerialNumberDetails = async (serialNumber) => {
+    setDataFetchLoading(true);
     try {
       const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForPDI/?Serial_Number=${serialNumber}`, {
         auth: {
@@ -88,38 +89,19 @@ const PDI_DefectEntryScreen = () => {
           Part_Description: serialInformation.Part_Description,
         });
 
-        await fetchPartsData(serialInformation.Series, process);
+        fetchAuditors();
+
+        await fetchPartsData(serialInformation.Series);
         return serialInformation.Serial_Number;
       }
     } catch (error) {
       console.error('Error fetching serial number details:', error);
+    } finally {
+      setDataFetchLoading(false);
     }
   };
 
-  const fetchChassisNumber = async (value) => {
-    setDataFetchLoading(true);
-    try {
-      if (value.length == 6 || value.length == 17) {
-        const chassis = await fetchSerialNumberDetails(value);
-        if (chassis) {
-          setChassisNumber(chassis);
-          fetchAuditors();
-        }
-      }
-      setDataFetchLoading(false);
-    } catch (error) {
-      setDataFetchLoading(false);
-      console.error('Error fetching serial details :', error);
-    }
-  };
-
-  const handleChassisNumberChange = async (e) => {
-    const value = e.target.value;
-    setChassisNumber(value);
-    fetchChassisNumber(value);
-  };
-
-  const fetchPartsData = async (series, processName) => {
+  const fetchPartsData = async (series) => {
     try {
       const response = await axios.get(`http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoModel?Model_Name=${series}`, {
         auth: {
@@ -206,16 +188,6 @@ const PDI_DefectEntryScreen = () => {
     }
   };
 
-  useEffect(() => {
-    if (chassisNumber) {
-      fetchHeaderData(chassisNumber);
-    }
-  }, [chassisNumber]);
-
-  const fetchHeaderData = (chassisNumber) => {
-    console.log(`Fetching data for chassis: ${chassisNumber}`);
-  };
-
   const handleDefectChange = (selectedOptions) => {
     setSelectedDefects(selectedOptions);
   };
@@ -289,10 +261,6 @@ const PDI_DefectEntryScreen = () => {
     setTotalDemerits((prevTotal) => prevTotal + newDemerits);
   };
 
-  useEffect(() => {
-    fetchAuditors();
-  }, []);
-
   const handleDelete = (index, defectValue, demeritValue) => {
     setTableEntries((prevEntries) => {
       const updatedEntries = prevEntries.filter((_, i) => i !== index);
@@ -325,19 +293,18 @@ const PDI_DefectEntryScreen = () => {
   };
 
   const proceedWithSubmission = async () => {
-    if (!auditDate) {
-      toast.error('Please select inspection date and time.');
-      setSubmitLoading(false);
-      return;
-    }
-
-    if (!selectedAuditor) {
-      toast.error('Please select inspector name.');
-      setSubmitLoading(false);
-      return;
-    }
-
     try {
+      if (!auditDate) {
+        toast.error('Please select inspection date and time.');
+        setSubmitLoading(false);
+        return;
+      }
+
+      if (!selectedAuditor) {
+        toast.error('Please select inspector name.');
+        setSubmitLoading(false);
+        return;
+      }
       let status;
       if (tableEntries.length === 0) {
         const dataList = {
@@ -357,7 +324,6 @@ const PDI_DefectEntryScreen = () => {
           Inspector_Name: selectedAuditor.value,
           Audit_Date: auditDate,
         };
-        console.log(dataList);
         const serialNumber = chassisNumber;
         setChassisNumber(chassisNumber);
         const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
@@ -395,12 +361,9 @@ const PDI_DefectEntryScreen = () => {
             Status: defectStatus,
             Audit_Date: auditDate,
           };
-          console.log(dataList);
-          const serialNumber = chassisNumber;
-          setChassisNumber(chassisNumber);
           const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
-          )}&Serial_Number=${serialNumber}`;
+          )}&Serial_Number=${chassisNumber}`;
 
           const response = await axios.post(apiUrl, {
             auth: {
@@ -537,7 +500,7 @@ const PDI_DefectEntryScreen = () => {
           <div className="col-12 row">
             <div className="col-12 col-sm-6">
               <label htmlFor="inspectionDate" className="form-label fw-bold m-0">
-                Audit Date
+                Inspection Date
               </label>
               <div>
                 <DatePickerCustom auditDate={auditDate} setAuditDate={setAuditDate} chassisNumber={chassisNumber} />
@@ -545,7 +508,7 @@ const PDI_DefectEntryScreen = () => {
             </div>
             <div className="col-12 col-sm-6">
               <label htmlFor="inspectorName" className="form-label fw-bold m-0">
-                Auditor Name
+                Inspector Name
               </label>
               <Select
                 options={auditorOptions}

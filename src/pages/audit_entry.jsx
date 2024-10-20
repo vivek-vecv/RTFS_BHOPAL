@@ -89,7 +89,7 @@ const AuditEntry = () => {
           Order_Number: serialInformation.Order_Number,
           Part_Description: serialInformation.Part_Description,
         });
-
+        fetchAuditors();
         await fetchPartsData(serialInformation.Series, process);
         return serialInformation.Serial_Number;
       }
@@ -264,10 +264,6 @@ const AuditEntry = () => {
     setTotalDemerits((prevTotal) => prevTotal + newDemerits);
   };
 
-  useEffect(() => {
-    fetchAuditors();
-  }, []);
-
   const handleDelete = (index, defectValue, demeritValue) => {
     setTableEntries((prevEntries) => {
       const updatedEntries = prevEntries.filter((_, i) => i !== index);
@@ -370,11 +366,9 @@ const AuditEntry = () => {
             Audit_Date: auditDate,
           };
 
-          const serialNumber = chassisNumber;
-          setChassisNumber(chassisNumber);
           const apiUrl = `http://10.119.1.101:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
-          )}&Serial_Number=${serialNumber}`;
+          )}&Serial_Number=${chassisNumber}`;
 
           const response = await axios.post(apiUrl, {
             auth: {
@@ -410,7 +404,6 @@ const AuditEntry = () => {
     setConfirmationVisible(false);
     await proceedWithSubmission();
   };
-  console.log(chassisNumber);
 
   const handleCancel = () => {
     setConfirmationVisible(false);
