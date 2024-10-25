@@ -69,7 +69,7 @@ const PDI_DefectEntryScreen = () => {
   const fetchSerialNumberDetails = async (serialNumber) => {
     setDataFetchLoading(true);
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForPDI/?Serial_Number=${serialNumber}`, {
+      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getSerialNoDetailsForPDI/?Serial_Number=${serialNumber}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -103,7 +103,7 @@ const PDI_DefectEntryScreen = () => {
 
   const fetchPartsData = async (series) => {
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getPartsForPDIAcctoModel?Model_Name=${series}`, {
+      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getPartsForPDIAcctoModel?Model_Name=${series}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -136,7 +136,7 @@ const PDI_DefectEntryScreen = () => {
   const fetchDefectsForPart = async (seriesName, partName) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.101:9898/rest/api/getAllDefectsForPDIPart?Model_Name=${seriesName}&Part_name=${partName}`,
+        `http://10.119.1.127:9898/rest/api/getAllDefectsForPDIPart?Model_Name=${seriesName}&Part_name=${partName}`,
         {
           auth: {
             username: 'arun',
@@ -161,7 +161,7 @@ const PDI_DefectEntryScreen = () => {
 
   const fetchAuditors = async () => {
     try {
-      const response = await axios.get('http://10.119.1.101:9898/rest/api/getAllInspectorsForPDI', {
+      const response = await axios.get('http://10.119.1.127:9898/rest/api/getAllInspectorsForPDI', {
         auth: {
           username: 'arun',
           password: '123456',
@@ -213,7 +213,7 @@ const PDI_DefectEntryScreen = () => {
         continue;
       }
 
-      const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForPDI?part_ID=${encodeURIComponent(
+      const apiUrl = `http://10.119.1.127:9898/rest/api/getAllDefectsDataForPDI?part_ID=${encodeURIComponent(
         selectedPart.value
       )}&Defect_Desc=${encodeURIComponent(selectedDefect.value)}&Model=${encodeURIComponent(model)}`;
 
@@ -326,7 +326,7 @@ const PDI_DefectEntryScreen = () => {
         };
         const serialNumber = chassisNumber;
         setChassisNumber(chassisNumber);
-        const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+        const apiUrl = `http://10.119.1.127:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
           JSON.stringify(dataList)
         )}&Serial_Number=${serialNumber}`;
 
@@ -361,7 +361,7 @@ const PDI_DefectEntryScreen = () => {
             Status: defectStatus,
             Audit_Date: auditDate,
           };
-          const apiUrl = `http://10.119.1.101:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
+          const apiUrl = `http://10.119.1.127:9898/rest/api/savePDIDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
           )}&Serial_Number=${chassisNumber}`;
 

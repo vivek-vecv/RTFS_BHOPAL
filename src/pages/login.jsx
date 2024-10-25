@@ -22,7 +22,7 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/login?username=${username}&password=${password}`, {
+      const response = await axios.get(`http://10.119.1.127:9898/rest/api/login?username=${username}&password=${password}`, {
         username,
         password,
       });
@@ -54,7 +54,7 @@ const LoginPage = () => {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="ms-auto p-4 login-box rounded-end-5  bg-secondary bg-opacity-25 ">
+        <div className="ms-auto p-4 login-box rounded-5  bg-secondary bg-opacity-25 ">
           <h3 className="text-center fw-bold">Login</h3>
           <CForm onSubmit={handleLogin} className="p-4 gap-4 d-flex flex-column my-auto">
             <div className="form-group">

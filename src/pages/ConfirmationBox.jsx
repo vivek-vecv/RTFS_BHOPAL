@@ -1,6 +1,4 @@
 import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter, CButton } from '@coreui/react';
-import { toast } from 'react-toastify';
-
 const ConfirmationBox = ({ title, message, onConfirm, onCancel, visible }) => {
   return (
     <CModal visible={visible} onClose={onCancel}>

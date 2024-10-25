@@ -19,7 +19,7 @@ const ChassisNumberSelect = ({ chassisNumber, setChassisNumber, fetchSerialNumbe
   // API call to fetch matching chassis numbers based on the typed or scanned value
   const fetchChassisNumbers = async (inputValue) => {
     try {
-      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getAvailableSerialNoForPR?Serial_Number=${inputValue}`, {
+      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getAvailableSerialNoForPR?Serial_Number=${inputValue}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -78,18 +78,18 @@ const ChassisNumberSelect = ({ chassisNumber, setChassisNumber, fetchSerialNumbe
     <div className="input-group">
       <AsyncSelect
         cacheOptions
-        className="flex-grow-1"
+        className="form-control p-0"
         loadOptions={loadOptions}
         onChange={handleChange}
         isClearable
         value={selectedOption}
         defaultOptions={false}
         noOptionsMessage={() => 'Type at least last 6 characters to search'}
-        placeholder="Enter chassis number..."
+        placeholder="Enter Serial num"
         filterOption={() => true} // Prevents local filtering so only API results show
       />
       <BsQrCode
-        className="input-group-text p-1 flex-grow-0"
+        className="input-group-text p-1"
         size={40}
         onClick={handleQrClick}
         style={{ cursor: 'pointer' }}

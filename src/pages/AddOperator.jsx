@@ -12,7 +12,7 @@ const AddOperator = ({ isVisible, station, shift, onClose, fetchAuditors }) => {
 
     try {
       const response = await axios.post(
-        `http://10.119.1.101:9898/rest/api/addOperatorDataByStation?Station_Name=${station}&Shift_Name=${shift}&Operator_Name=${operatorName}`,
+        `http://10.119.1.127:9898/rest/api/addOperatorDataByStation?Station_Name=${station}&Shift_Name=${shift}&Operator_Name=${operatorName}`,
         {
           auth: {
             username: 'arun',
