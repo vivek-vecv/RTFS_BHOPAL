@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { CButton, CSpinner, CModal, CModalHeader, CModalBody, CFormCheck, CFormInput, CModalFooter, CModalTitle } from '@coreui/react';
 import { toast } from 'react-toastify';
