@@ -150,7 +150,7 @@ export const QGComponent = ({ param }) => {
     if (chassisNumber) {
       try {
         const response = await axios.get(
-          `http://10.119.1.127:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+          `http://10.119.1.101:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
           {
             auth: {
               username: 'arun',
@@ -172,7 +172,7 @@ export const QGComponent = ({ param }) => {
     if (chassisNumber) {
       try {
         const response = await axios.get(
-          `http://10.119.1.127:9898/rest/api/getTorqueByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`
+          `http://10.119.1.101:9898/rest/api/getTorqueByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`
         );
         setTorqueData(response.data.Torque_Information);
         setIsTorqueModalVisible(true);
@@ -191,7 +191,7 @@ export const QGComponent = ({ param }) => {
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.127:9898/rest/api/getQualityGateSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+        `http://10.119.1.101:9898/rest/api/getQualityGateSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
         {
           auth: {
             username: 'arun',
@@ -259,7 +259,7 @@ export const QGComponent = ({ param }) => {
 
   const fetchAuditors = async () => {
     try {
-      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -329,7 +329,7 @@ export const QGComponent = ({ param }) => {
               }
             }
             const response = await axios.post(
-              `http://10.119.1.127:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+              `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
               [defectEntries],
 
               {
@@ -388,7 +388,7 @@ export const QGComponent = ({ param }) => {
     if (value === 'nok') {
       try {
         const response = await axios.get(
-          `http://10.119.1.127:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
+          `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
         );
 
         // Group defects based on Checkpoint_Id
@@ -463,7 +463,7 @@ export const QGComponent = ({ param }) => {
       };
       defectEntries.checkpointDefectList.push(defectEntry);
       const response = await axios.post(
-        `http://10.119.1.127:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
+        `http://10.119.1.101:9898/rest/api/saveCheckpointDefects?Serial_Number=${chassisNumber}`,
         [defectEntries],
         {
           auth: {

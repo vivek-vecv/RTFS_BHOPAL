@@ -69,7 +69,7 @@ const AuditEntry = () => {
   const fetchSerialNumberDetails = async (serialNumber) => {
     setDataFetchLoading(true);
     try {
-      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getSerialNoDetailsForAudit?Serial_Number=${serialNumber}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getSerialNoDetailsForAudit?Serial_Number=${serialNumber}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -103,7 +103,7 @@ const AuditEntry = () => {
   const fetchPartsData = async (series, processName) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.127:9898/rest/api/getPartsForAuditAcctoProcess?Model=${series}&Process_Name=${processName}`,
+        `http://10.119.1.101:9898/rest/api/getPartsForAuditAcctoProcess?Model=${series}&Process_Name=${processName}`,
         {
           auth: {
             username: 'arun',
@@ -139,7 +139,7 @@ const AuditEntry = () => {
   const fetchDefectsForPart = async (seriesName, partName) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.127:9898/rest/api/getAllDefectsForAuditPart?Model_Name=${seriesName}&Part_name=${partName}`,
+        `http://10.119.1.101:9898/rest/api/getAllDefectsForAuditPart?Model_Name=${seriesName}&Part_name=${partName}`,
         {
           auth: {
             username: 'arun',
@@ -164,7 +164,7 @@ const AuditEntry = () => {
 
   const fetchAuditors = async () => {
     try {
-      const response = await axios.get('http://10.119.1.127:9898/rest/api/getAllAuditors/', {
+      const response = await axios.get('http://10.119.1.101:9898/rest/api/getAllAuditors/', {
         auth: {
           username: 'arun',
           password: '123456',
@@ -216,7 +216,7 @@ const AuditEntry = () => {
         continue;
       }
 
-      const apiUrl = `http://10.119.1.127:9898/rest/api/getAllDefectsDataForAudit?part_ID=${encodeURIComponent(
+      const apiUrl = `http://10.119.1.101:9898/rest/api/getAllDefectsDataForAudit?part_ID=${encodeURIComponent(
         selectedPart.value
       )}&Defect_Desc=${encodeURIComponent(selectedDefect.value)}&Model=${encodeURIComponent(model)}`;
 
@@ -330,7 +330,7 @@ const AuditEntry = () => {
 
         const serialNumber = chassisNumber;
         setChassisNumber(chassisNumber);
-        const apiUrl = `http://10.119.1.127:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
+        const apiUrl = `http://10.119.1.101:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
           JSON.stringify(dataList)
         )}&Serial_Number=${serialNumber}`;
 
@@ -366,7 +366,7 @@ const AuditEntry = () => {
             Audit_Date: auditDate,
           };
 
-          const apiUrl = `http://10.119.1.127:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
+          const apiUrl = `http://10.119.1.101:9898/rest/api/saveAuditDefectData?dataList=${encodeURIComponent(
             JSON.stringify(dataList)
           )}&Serial_Number=${chassisNumber}`;
 

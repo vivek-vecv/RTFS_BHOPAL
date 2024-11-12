@@ -1,0 +1,88 @@
+.body.operatorModel{
+  overflow-y: hidden;
+}
+
+.modal-header {
+  background-color: #f5f5f5;
+  border-bottom: 1px solid #e5e5e5;
+ 
+}
+
+.modal-footer {
+  border-top: 1px solid #e5e5e5;
+}
+
+.table-header {
+  background-color: #007bff;
+  color: white;
+  text-align: left;
+  font-weight: bold;
+}
+
+.table-row {
+  cursor: pointer;
+}
+
+.table-row-selected {
+  background-color: #d8d8d8;
+}
+
+.input-box {
+  margin: 10px 0;
+}
+
+.form-control{
+  display: flex !important;
+  width:12rem;
+  margin: 2px;
+}
+
+.th th {
+  background-color: #0d3869 !important;
+  border: 1px solid #fffbfb !important;
+  color: white !important;
+  text-align: left;
+  position: sticky;
+  top: 0 ;
+  z-index: 10;
+  
+}
+
+table {
+  border-collapse: collapse;
+}
+
+.table-wrapper {
+  max-height: 300px; 
+  overflow-y: auto;
+}
+
+.table-wrapper table {
+  width: 100%;
+  border-spacing: 0; 
+}
+
+.table-data td {
+  border: 1px solid #eae9e9;
+}
+
+
+.op-button{
+background-color: #0d3869;
+width: 7rem;
+color: #e5e5e5;
+}
+
+.btn modal-btn{
+background-color: #f5f5f5;
+}
+
+.container{
+max-width: 100%;
+}
+button.btn.btn-danger{
+  color:white;
+}
+button.btn.btn-close{
+  background-color: #f5f5f5;
+}

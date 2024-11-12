@@ -22,7 +22,7 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.get(`http://10.119.1.127:9898/rest/api/login?username=${username}&password=${password}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/login?username=${username}&password=${password}`, {
         username,
         password,
       });

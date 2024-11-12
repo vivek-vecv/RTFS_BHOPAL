@@ -137,7 +137,7 @@ export const PostRolloutComponent = ({ param }) => {
       setGeneloading(true);
       try {
         const response = await axios.get(
-          `http://10.119.1.127:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+          `http://10.119.1.101:9898/rest/api/getGeneaologyByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
           {
             auth: {
               username: 'arun',
@@ -162,7 +162,7 @@ export const PostRolloutComponent = ({ param }) => {
     if (chassisNumber) {
       try {
         const response = await axios.get(
-          `http://10.119.1.127:9898/rest/api/getTorqueByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`
+          `http://10.119.1.101:9898/rest/api/getTorqueByStationSerial?Serial_Number=${chassisNumber}&Line_Name=${param.line}&Station_Name=${param.station}`
         );
         setTorqueData(response.data.Torque_Information);
         setIsTorqueModalVisible(true);
@@ -181,7 +181,7 @@ export const PostRolloutComponent = ({ param }) => {
   const fetchSerialNumberDetails = async (serialNumber) => {
     try {
       const response = await axios.get(
-        `http://10.119.1.127:9898/rest/api/getFviSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
+        `http://10.119.1.101:9898/rest/api/getFviSerialNumberByLineName/?Serial_Number=${serialNumber}&Line_Name=${param.line}&Station_Name=${param.station}`,
         {
           auth: {
             username: 'arun',
@@ -249,7 +249,7 @@ export const PostRolloutComponent = ({ param }) => {
 
   const fetchAuditors = async () => {
     try {
-      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getOperatorDataByStation?Station_Name=${param.station}`, {
         auth: {
           username: 'arun',
           password: '123456',
@@ -319,7 +319,7 @@ export const PostRolloutComponent = ({ param }) => {
             }
 
             const response = await axios.post(
-              `http://10.119.1.127:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
+              `http://10.119.1.101:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
               [
                 {
                   checkpointList: defectEntries,
@@ -379,7 +379,7 @@ export const PostRolloutComponent = ({ param }) => {
   //     if (value === 'nok') {
   //       try {
   //         // const response = await axios.get(
-  //         //   `http://10.119.1.127:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
+  //         //   `http://10.119.1.101:9898/rest/api/getCheckpointDefects?Line_Name=${param.line}&Station_Name=${param.station}&Checkpoint_Id=${checkpointId}`
   //         // );
 
   //         // Group defects based on Checkpoint_Id
@@ -477,7 +477,7 @@ export const PostRolloutComponent = ({ param }) => {
       defectEntries.push(CheckpointDefectList);
 
       const response = await axios.post(
-        `http://10.119.1.127:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
+        `http://10.119.1.101:9898/rest/api/savePostRolloutCheckpoints?Serial_Number=${chassisNumber}`,
         [
           {
             checkpointList: defectEntries,

@@ -12,6 +12,8 @@ import Navbar from './pages/navbar.jsx';
 import './assets/custom.css';
 import { NavbarProvider } from './context/NavbarContext.jsx';
 import PostRolloutComponent from './pages/PostRollout.jsx';
+import KPIDashboard from './pages/KPIDashboard.jsx';
+import AlertScreen from './pages/AlertScreen.jsx';
 
 const App = () => {
   return (
@@ -55,6 +57,8 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route path="/kpi" element={<KPIDashboard />} />
+            <Route path="/alert" element={<AlertScreen />} />
             <Route path="/" element={<Navigate to="/login" />} />
           </Routes>
         </NavbarProvider>

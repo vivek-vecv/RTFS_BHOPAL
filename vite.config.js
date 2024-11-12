@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
       proxy: {
         '/rest/api': {
-          target: env.VITE_API_URL || 'http://10.119.1.127:9898', // Backend API URL
+          target: env.VITE_API_URL || 'http://10.119.1.101:9898', // Backend API URL
           changeOrigin: true, // Needed for virtual hosted sites
           secure: false, // If using self-signed certificates
           rewrite: (path) => path.replace(/^\/rest\/api/, ''), // Optional path rewrite

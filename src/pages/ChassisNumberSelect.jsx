@@ -19,7 +19,7 @@ const ChassisNumberSelect = ({ chassisNumber, setChassisNumber, fetchSerialNumbe
   // API call to fetch matching chassis numbers based on the typed or scanned value
   const fetchChassisNumbers = async (inputValue) => {
     try {
-      const response = await axios.get(`http://10.119.1.127:9898/rest/api/getAvailableSerialNoForPR?Serial_Number=${inputValue}`, {
+      const response = await axios.get(`http://10.119.1.101:9898/rest/api/getAvailableSerialNoForPR?Serial_Number=${inputValue}`, {
         auth: {
           username: 'arun',
           password: '123456',
