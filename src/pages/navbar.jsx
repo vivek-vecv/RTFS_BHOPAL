@@ -35,7 +35,7 @@ const Navbar = () => {
 
   const pathname = location.pathname;
   const pathAfterSlash = pathname.startsWith('/') ? pathname.slice(1) : pathname;
-  return (
+  return pathAfterSlash != 'dashboard' ? (
     <CNavbar color="primary" className="navbar position-sticky top-0 text-white" style={{ zIndex: '10000' }}>
       <CNavbarBrand onClick={handleHomePage}>
         <img src={logo} alt="Logo" className="logoImg" style={{ height: '40px' }} />
@@ -67,6 +67,8 @@ const Navbar = () => {
         </div>
       )}
     </CNavbar>
+  ) : (
+    ''
   );
 };
 

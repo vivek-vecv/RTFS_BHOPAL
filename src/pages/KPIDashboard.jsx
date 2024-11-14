@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ReactSpeedometer from 'react-d3-speedometer';
 import { CCard, CCardBody, CCol, CRow } from '@coreui/react';
-import { CChartLine } from '@coreui/react-chartjs';
+import { CChartLine, CChart } from '@coreui/react-chartjs';
 import { useLocation } from 'react-router-dom';
 import queryString from 'query-string';
 import vehicleImg from '../images/LMD_Truck.jpg';
@@ -9,25 +9,12 @@ import '../assets/dashboardCss.scss';
 import axios from 'axios';
 const KPIDashboard = (props) => {
   const location = useLocation();
-  const [data, setData] = useState(null);
-  const [auditData, setAuditData] = useState([]);
-
   const parsed = queryString.parse(location.search);
-  console.log(parsed.Line, parsed.Zone);
 
   const [line, setLine] = useState(parsed.Line || 'Chassis');
   const [zone, setZone] = useState(parsed.Zone || 'QG03L');
   const [mainline, setMainline] = useState('Chassis');
-
-  const [demeritsOverAll, setDemeritsOverAll] = useState({ data: [], labels: [] });
-  const [demeritsZoneProcess, setDemeritsZoneProcess] = useState({ data: [], labels: [] });
-
-  const [demeritsZone, setDemeritsZone] = useState({ data: [], labels: [] });
-  const [demeritsLMD, setDemeritsLMD] = useState({ data: [], labels: [] });
-  const [demeritsUD, setDemeritsUD] = useState({ data: [], labels: [] });
   const [demeritsHD, setDemeritsHD] = useState({ data: [], labels: [] });
-  const [FTTableData, setFTTableData] = useState([]);
-
   const [auditDemeritTrend, setAuditDemeritTrend] = useState([]);
   const [gaugeDemeritTrend, setGaugeDemeritTrend] = useState([]);
   const [zonewiseTrendDaily, setZonewiseTrendDaily] = useState([]);
@@ -118,6 +105,10 @@ const KPIDashboard = (props) => {
       color = val == '100' ? 'green-color' : 'red-color';
     }
     return color;
+  };
+
+  const getStyle = (variable) => {
+    return getComputedStyle(document.documentElement).getPropertyValue(variable);
   };
 
   return (
@@ -268,6 +259,51 @@ const KPIDashboard = (props) => {
                         labels={demeritsHD?.labels}
                       />
                     </CCardBody> */}
+                    {/* <CCardBody> */}
+                    <CChart
+                      type="line"
+                      data={{
+                        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                        datasets: [
+                          {
+                            label: 'Demerit Per vehicle',
+                            backgroundColor: 'rgba(220, 220, 220, 0.2)',
+                            borderColor: 'rgba(220, 220, 220, 1)',
+                            pointBackgroundColor: 'rgba(220, 220, 220, 1)',
+                            pointBorderColor: '#fff',
+                            data: [40, 20, 12, 39, 10, 40, 39, 80, 40],
+                          },
+                        ],
+                      }}
+                      options={{
+                        plugins: {
+                          legend: {
+                            labels: {
+                              color: getStyle('--cui-body-color'),
+                            },
+                          },
+                        },
+                        scales: {
+                          x: {
+                            grid: {
+                              color: getStyle('--cui-border-color-translucent'),
+                            },
+                            ticks: {
+                              color: getStyle('--cui-body-color'),
+                            },
+                          },
+                          y: {
+                            grid: {
+                              color: getStyle('--cui-border-color-translucent'),
+                            },
+                            ticks: {
+                              color: getStyle('--cui-body-color'),
+                            },
+                          },
+                        },
+                      }}
+                    />
+                    {/* </CCardBody> */}
                   </CCard>
                 </div>
               </div>
