@@ -170,13 +170,19 @@
     .card-body {
       padding: 0.625rem;
 
-      canvas {
-        height: 140px !important;
-        font-weight: bold;
-      }
+      // canvas {
+      //   height: 140px !important;
+      //   font-weight: bold;
+      // }
     }
   }
 
+  canvas {
+    width: 100% !important; 
+    height: 28vh !important;
+    padding-top: 10px;
+  }
+  
   .main-card-50 {
     margin-bottom: 5;
 
@@ -217,11 +223,10 @@
 
       canvas {
         height: 160px !important;
-        transform: scale(1.2);
+        //transform: scale(1.2);
         box-shadow: 0px 0px 0px 2px rgba(58, 139, 245, 0.404);
-        background-color: white;
-
-        border-radius: 8px;
+        background-color: rgb(255, 255, 255);
+      border-radius: 8px;
       }
     }
   }

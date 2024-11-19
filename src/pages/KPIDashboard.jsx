@@ -7,6 +7,7 @@ import queryString from 'query-string';
 import vehicleImg from '../images/LMD_Truck.jpg';
 import '../assets/dashboardCss.scss';
 import axios from 'axios';
+import Chart from "react-apexcharts";
 const KPIDashboard = (props) => {
   const location = useLocation();
   const parsed = queryString.parse(location.search);
@@ -14,7 +15,8 @@ const KPIDashboard = (props) => {
   const [line, setLine] = useState(parsed.Line || 'Chassis');
   const [zone, setZone] = useState(parsed.Zone || 'QG03L');
   const [mainline, setMainline] = useState('Chassis');
-  const [demeritsHD, setDemeritsHD] = useState({ data: [], labels: [] });
+  const [demeritsHD, setDemeritsHD] = useState({ labels: [], data: [] });
+
   const [auditDemeritTrend, setAuditDemeritTrend] = useState([]);
   const [gaugeDemeritTrend, setGaugeDemeritTrend] = useState([]);
   const [zonewiseTrendDaily, setZonewiseTrendDaily] = useState([]);
@@ -41,15 +43,18 @@ const KPIDashboard = (props) => {
 
           const demeritsData = CreateArray(response.data?.PRODUCTAUDITCHART?.AUDITDEMERITTREND?.DEMERIT);
 
+
           const labelsHD = [];
           const HDData = [];
           if (demeritsData && demeritsData.length > 0) {
             demeritsData.forEach((item) => {
-              labelsHD.push(item.Time_Range === 'CURRENTDATE' ? 'TODAY' : item.Time_Range);
-              HDData.push(item.Audit);
+              //labelsHD.push(item.Time_Range === 'CURRENTDATE' ? 'TODAY' : item.Time_Range);
+              labelsHD.push(item.Time_Range); 
+              HDData.push(Number(item.Audit));
             });
           }
-
+          console.log('labelsHDddddd:', labelsHD);
+        console.log('HDDataaaaa:', HDData);
           setGaugeDemeritTrend(data.GAUGEDEMERITTREND?.DEMERIT ?? []);
           setAuditDemeritTrend(data.AUDITDEMERITTREND?.DEMERIT ?? []);
           setZonewiseTrendDaily(data.ZONEWISETRENDDAILY?.DEMERIT ?? []);
@@ -65,7 +70,13 @@ const KPIDashboard = (props) => {
 
     fetchAuditDetails();
   }, []);
+ console.log("data:",demeritsHD.data,", labelss:",demeritsHD.labels)
 
+
+
+
+
+  
   const drawLineLabels = (chart) => {
     const ctx = chart.ctx;
     ctx.textAlign = 'center';
@@ -199,112 +210,43 @@ const KPIDashboard = (props) => {
                 {/* <div className="col-md-12 vehicle-trend-title text-center"><h3>Demerit per Vehicle Trend</h3></div> */}
                 <div className="col-12">
                   <CCard className="main-card-12">
-                    {/* <CCardBody>
-                      <CChartLine
-                        datasets={[
-                          {
-                            label: `${line} Demerits`,
-                            borderColor: '#0d86ff',
-                            data: demeritsHD?.data,
-                            fill: false,
-                          },
-                        ]}
-                        options={{
-                          defaultFontColor: '#000',
-                          title: {
-                            display: true,
-                            text: '',
-                            fontSize: 12,
-                            padding: 5,
-                            fontColor: '#000',
-                          },
-                          legend: {
-                            display: false,
-                            position: 'bottom',
-                          },
-                          scales: {
-                            y: [
-                              {
-                                ticks: {
-                                  suggestedMin: 10,
-                                  maxTicksLimit: 8,
-                                  fontColor: '#000',
-                                  //suggestedMax: 100
-                                },
-                                scaleLabel: {
-                                  display: true,
-                                  fontColor: '#000',
-                                  labelString: 'Demerit Per Vehicle',
-                                },
-                              },
-                            ],
-                            x: [
-                              {
-                                offset: true,
-                                ticks: {
-                                  fontColor: '#000',
-                                },
-                              },
-                            ],
-                          },
-                          tooltips: {
-                            enabled: true,
-                          },
-                          animation: {
-                            onProgress: drawLineLabels,
-                            onComplete: drawLineLabels,
-                          },
-                          //   hover: { animationDuration: 0 },
-                        }}
-                        labels={demeritsHD?.labels}
-                      />
-                    </CCardBody> */}
-                    {/* <CCardBody> */}
-                    <CChart
-                      type="line"
-                      data={{
-                        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
-                        datasets: [
-                          {
-                            label: 'Demerit Per vehicle',
-                            backgroundColor: 'rgba(220, 220, 220, 0.2)',
-                            borderColor: 'rgba(220, 220, 220, 1)',
-                            pointBackgroundColor: 'rgba(220, 220, 220, 1)',
-                            pointBorderColor: '#fff',
-                            data: [40, 20, 12, 39, 10, 40, 39, 80, 40],
-                          },
-                        ],
-                      }}
-                      options={{
-                        plugins: {
-                          legend: {
-                            labels: {
-                              color: getStyle('--cui-body-color'),
-                            },
-                          },
-                        },
-                        scales: {
-                          x: {
-                            grid: {
-                              color: getStyle('--cui-border-color-translucent'),
-                            },
-                            ticks: {
-                              color: getStyle('--cui-body-color'),
-                            },
-                          },
-                          y: {
-                            grid: {
-                              color: getStyle('--cui-border-color-translucent'),
-                            },
-                            ticks: {
-                              color: getStyle('--cui-body-color'),
-                            },
-                          },
-                        },
-                      }}
-                    />
-                    {/* </CCardBody> */}
+                    <CChart 
+                     
+                     type="line"
+                     data={{
+                       labels:demeritsHD.labels,
+                       datasets: [
+                         {
+                           label:'Demerit Per Vehicle',
+                           backgroundColor: 'rgba(220,220,220 , 0.2)',
+                           borderColor:'rgb(61, 88, 194)',
+                           pointBorderColor:'rgb(174, 226, 40)',
+                           pointBackgroundColor:'rgb(174, 226, 40)',
+                           data: demeritsHD.data,
+                           tension: 0.4,
+                         },
+                       ],
+                     }}
+                     options={{
+                       plugins: {
+                         legend: {
+                           display: false,
+                           position: 'bottom',
+                         },
+                         tooltip: { enabled: false },
+                       },
+                       scales: {
+                         y: {
+                           title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
+                           ticks: { color: '#000', suggestedMin: 0, maxTicksLimit: 5 },
+                         },
+                         x: { ticks: { color: '#000' } },
+                       },
+                     }}
+                     />
+             
                   </CCard>
+                
                 </div>
               </div>
               <hr className="hr-line" />
@@ -432,39 +374,75 @@ const KPIDashboard = (props) => {
                 {/* <div className="col-md-12 vehicle-trend-title text-center"><h3>Demerit per Vehicle Trend</h3></div> */}
                 <div className="col-12">
                   <CCard className="main-card-12">
-                    {/* <CCardBody>
-                      <CChartLine
-                        datasets={[
-                          {
-                            label: 'HD Demerits',
-                            borderColor: '#0d86ff',
-                            data: demeritsHD?.data,
-                            fill: false,
-                          },
-                        ]}
-                        options={{
-                          plugins: {
-                            legend: {
-                              display: false,
-                              position: 'bottom',
-                            },
-                            tooltip: { enabled: true },
-                          },
-                          scales: {
-                            y: {
-                              title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
-                              ticks: { color: '#000', suggestedMin: 10, maxTicksLimit: 8 },
-                            },
-                            x: { ticks: { color: '#000' } },
-                          },
-                          animation: {
-                            onProgress: drawLineLabels,
-                            onComplete: drawLineLabels,
-                          },
-                        }}
-                        labels={demeritsHD?.labels}
-                      />
-                    </CCardBody> */}
+                  <CChart 
+                     
+                     type="line"
+                     data={{
+                       labels:demeritsHD.labels,
+                       datasets: [
+                         {
+                           label:'Demerit Per Vehicle',
+                           backgroundColor: 'rgba(220,220,220 , 0.2)',
+                           borderColor:'rgb(61, 88, 194)',
+                           pointBorderColor:'rgb(174, 226, 40)',
+                           pointBackgroundColor:'rgb(174, 226, 40)',
+                           data:demeritsHD.data,
+                           tension: 0.4,
+                         },
+                       ],
+                     }}
+                     // options={{
+                     //   plugins:{
+             
+                     //       legend: {
+                     //         display: false,
+                     //         position: 'bottom',
+                     //       },
+                     //       tooltip: { enabled: true },
+                       
+   
+                     //   scales:{
+                     //     x:{
+                     //       grid:{
+                     //         color:'#f2f3f4',
+                     //       },
+                     //       ticks:{
+                     //         color: '#2c3e50',
+                     //       },
+                     //     },
+   
+                     //     y:{
+                     //       grid:{
+                     //         color:'#f2f3f4',
+                     //       },
+                     //       ticks:{
+                     //         color:'#2c3e50',suggestedMin: 10, maxTicksLimit: 8
+                     //       },
+                     //       title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
+                     //     },
+                     //   },
+                     // }}}
+                     options={{
+                       plugins: {
+                         legend: {
+                           display: false,
+                           position: 'bottom',
+                         },
+                         tooltip: { enabled: false },
+                       },
+                       scales: {
+                         y: {
+                           title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
+                           ticks: { color: '#000', suggestedMin: 10, maxTicksLimit: 8 },
+                         },
+                         x: { ticks: { color: '#000' } },
+                       },
+                       // animation: {
+                       //   onProgress: drawLineLabels,
+                       //   onComplete: drawLineLabels,
+                       // },
+                     }}
+                     />
                   </CCard>
                 </div>
               </div>
@@ -593,39 +571,76 @@ const KPIDashboard = (props) => {
                 {/* <div className="col-md-12 vehicle-trend-title text-center"><h3>Demerit per Vehicle Trend</h3></div> */}
                 <div className="col-12">
                   <CCard className="main-card-12">
-                    {/* <CCardBody>
-                      <CChartLine
-                        datasets={[
-                          {
-                            label: 'HD Demerits',
-                            borderColor: '#0d86ff',
-                            data: demeritsHD?.data,
-                            fill: false,
-                          },
-                        ]}
-                        options={{
-                          plugins: {
-                            legend: {
-                              display: false,
-                              position: 'bottom',
-                            },
-                            tooltip: { enabled: true },
-                          },
-                          scales: {
-                            y: {
-                              title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
-                              ticks: { color: '#000', suggestedMin: 10, maxTicksLimit: 8 },
-                            },
-                            x: { ticks: { color: '#000' } },
-                          },
-                          animation: {
-                            onProgress: drawLineLabels,
-                            onComplete: drawLineLabels,
-                          },
-                        }}
-                        labels={demeritsHD?.labels}
-                      />
-                    </CCardBody> */}
+                
+                     <CChart 
+                     
+                  type="line"
+                  data={{
+                    labels:demeritsHD.labels,
+                    datasets: [
+                      {
+                        label:'Demerit Per Vehicle',
+                        backgroundColor: 'rgba(220,220,220 , 0.2)',
+                        borderColor:'rgb(61, 88, 194)',
+                        pointBorderColor:'rgb(174, 226, 40)',
+                        pointBackgroundColor:'rgb(174, 226, 40)',
+                        data:demeritsHD.data,
+                        tension: 0.4
+                      },
+                    ],
+                  }}
+                  // options={{
+                  //   plugins:{
+          
+                  //       legend: {
+                  //         display: false,
+                  //         position: 'bottom',
+                  //       },
+                  //       tooltip: { enabled: true },
+                    
+
+                  //   scales:{
+                  //     x:{
+                  //       grid:{
+                  //         color:'#f2f3f4',
+                  //       },
+                  //       ticks:{
+                  //         color: '#2c3e50',
+                  //       },
+                  //     },
+
+                  //     y:{
+                  //       grid:{
+                  //         color:'#f2f3f4',
+                  //       },
+                  //       ticks:{
+                  //         color:'#2c3e50',suggestedMin: 10, maxTicksLimit: 8
+                  //       },
+                  //       title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
+                  //     },
+                  //   },
+                  // }}}
+                  options={{
+                    plugins: {
+                      legend: {
+                        display: false,
+                        position: 'bottom',
+                      },
+                      tooltip: { enabled: false },
+                    },
+                    scales: {
+                      y: {
+                        title: { display: true, text: 'Demerit Per Vehicle', color: '#000' },
+                        ticks: { color: '#000', suggestedMin: 10, maxTicksLimit: 8 },
+                      },
+                      x: { ticks: { color: '#000' } },
+                    },
+                    // animation: {
+                    //   onProgress: drawLineLabels,
+                    //   onComplete: drawLineLabels,
+                    // },
+                  }}
+                  />
                   </CCard>
                 </div>
               </div>
